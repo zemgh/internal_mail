@@ -1,7 +1,10 @@
 import hashlib
+import uuid
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.db import models
+from django.utils import timezone
 
 
 class CustomUserManager(BaseUserManager):
@@ -24,7 +27,7 @@ class User(AbstractBaseUser):
     is_staff = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
 
-    username = models.CharField(max_length=30, unique=True, db_index=True)
+    username = models.CharField(max_length=30, unique=True, db_index=True, verbose_name='Логин')
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     secret_word = models.CharField(max_length=64)
@@ -52,7 +55,7 @@ class User(AbstractBaseUser):
         sw_hash = hashlib.new('sha256', data).hexdigest()
         return sw_hash
 
-    def _check_secret_word(self, secret_word: str) -> bool:
+    def check_secret_word(self, secret_word: str) -> bool:
         sw_hash = self.__hash_secret_word(secret_word)
         return sw_hash == self.secret_word
 
@@ -61,9 +64,23 @@ class User(AbstractBaseUser):
             self.secret_word = self.__hash_secret_word(self.secret_word)
         super().save(*args, **kwargs)
 
-
     def has_perm(self, perm, obj=None):
         return True
 
     def has_module_perms(self, app_label):
         return True
+
+
+class UserResetToken(models.Model):
+    user = models.OneToOneField(to=get_user_model(), on_delete=models.CASCADE, related_name='reset_token')
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    created = models.DateTimeField(auto_now_add=True)
+    session_key = models.CharField(max_length=32)
+
+    objects = models.Manager()
+
+    token_lifetime = 600
+
+    def is_active(self):
+        return self.created + timezone.timedelta(seconds=self.token_lifetime) > timezone.now()
+

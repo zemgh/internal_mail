@@ -1,0 +1,21 @@
+{% extends 'users/base_user.html' %}
+
+{% block form %}
+
+    <div class="page">
+        <form method="post" class="form_window">
+            {% csrf_token %}
+            {% include 'users/includes/form.html' %}
+            <button type="submit" class="button">Войти</button>
+            <div class="options">
+                <a href="{% url 'password_reset' %}">Забыли пароль?</a>
+                <a href="{% url 'register' %}">Регистрация</a>
+            </div>
+        </form>
+    </div>
+
+{% endblock %}
+
+
+{% block scripts %}
+{% endblock %}
