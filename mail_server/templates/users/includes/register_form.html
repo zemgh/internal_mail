@@ -1,0 +1,19 @@
+<script>
+
+    el = document.querySelector('#input-{{ forloop.counter }}');
+
+    el.addEventListener('mouseover', function(event) {
+        let help_window = document.createElement('div');
+        help_window.className = 'help_window'
+        help_window.id = 'help_window'
+        help_window.innerHTML = '{{ f.help_text }}'
+        let page = document.querySelector('.page')
+        page.appendChild(help_window)
+    })
+
+    el.addEventListener('mouseout', function(event) {
+        let help_window = document.querySelector('#help_window')
+        help_window.remove()
+    })
+
+</script>

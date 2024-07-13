@@ -19,7 +19,7 @@ class UserRegistrationView(CreateView):
     template_name = 'users/register.html'
     form_class = UserRegisterForm
     success_url = reverse_lazy('login')
-    extra_context = {'title': 'Регистрация'}
+    extra_context = {'title': 'Регистрация', 'register': True}
 
 
 class UserPasswordResetView(FormView):
@@ -32,7 +32,6 @@ class UserPasswordResetView(FormView):
         username = form.cleaned_data.get('username')
         session_key = self.request.session.__dict__.get('_SessionBase__session_key')
         reset_token = self.get_token(username, session_key)
-
         self.request.session['reset_token'] = str(reset_token.uuid)
         return super().form_valid(form)
 
@@ -80,9 +79,6 @@ class UserPasswordChangeView(FormView):
         user.save()
         token.delete()
         return super().form_valid(form)
-
-
-
 
 
 

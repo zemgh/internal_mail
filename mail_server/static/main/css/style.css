@@ -1,0 +1,109 @@
+.menu, .mails, .contacts{
+    background-color: tan;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+div.page{
+    display: flex;
+    gap: 10px;
+}
+
+
+
+/*    Меню    */
+
+div.menu{
+    display: flex;
+    flex-direction: column;
+    width: 15%;
+    gap: 10px;
+    height: min-content;
+}
+
+button.menu_button{
+    width: 70%;
+    align-self: center;
+    border: 0;
+    font-size: 18px;
+}
+
+button.menu_button:hover{
+    background-color: white;
+}
+
+button.menu_button:active{
+    filter: brightness(80%);
+}
+
+div.menu_line{
+    display: flex;
+    padding: 5px 10px 5px 10px;
+    user-select: none;
+}
+
+div.menu_line:hover{
+    background-color: white;
+}
+
+div.menu_line_option{
+    width: 100%
+}
+
+div.menu_line_counter{
+}
+
+
+
+/*    Почта    */
+
+div.mails{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 70%;
+    height: 700px;
+}
+
+div.mails_filter_block{
+    width: 100%;
+    height: 50px;
+    background-color: gray;
+}
+
+div.mails_mails_block{
+    width: 100%;
+    height: 50px;
+    background-color: gray;
+}
+
+div.mails_mail{
+    width: 100%;
+    height: 50px;
+}
+
+
+
+/*    Контакты    */
+
+div.contacts{
+    display: flex;
+    flex-direction: column;
+    width: 15%;
+    height: 100px;
+    gap: 10px;
+}
+
+div.contacts_options{
+    width: 100%;
+    background-color: gray;
+}
+
+div.contacts_list{
+    width: 100%;
+    background-color: gray;
+}
+div.contacts_user{
+    width: 100%;
+    background-color: gray;
+}

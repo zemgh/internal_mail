@@ -1,7 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-	1221
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+
+    <div class="page">
+        {% include 'main/includes/menu.html' %}
+        {% include 'main/includes/mails.html' %}
+        {% include 'main/includes/contacts.html' %}
+    </div>
+
 {% endblock %}
 
 

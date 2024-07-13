@@ -1,7 +1,8 @@
-from django.contrib.auth import get_user_model, password_validation
+from django.contrib.auth import get_user_model
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.password_validation import validate_password
+from django.utils.safestring import mark_safe
 
 
 class UserLoginForm(AuthenticationForm):
@@ -19,6 +20,23 @@ class UserRegisterForm(UserCreationForm):
             'last_name': 'Фамилия',
             'secret_word': 'Секретное слово'
         }
+        help_texts = {
+            'username': 'a-z | A-Z | 0-0 | _ | - | 3+ символа',
+            'first_name': 'а-я | А-Я',
+            'last_name': 'а-я | А-Я',
+            'secret_word': 'а-я | 6+ символов'
+        }
+
+    password1 = forms.CharField(
+        label='Пароль',
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        help_text=mark_safe(
+            '<p>Пароль не должен быть слишком похож на другую вашу личную информацию.</p>'
+            '<p>Ваш пароль должен содержать как минимум 8 символов.</p>'
+            '<p>Пароль не должен быть слишком простым и распространенным.</p>'
+            '<p>Пароль не может состоять только из цифр.</p>'
+        )
+    )
 
 
 class UserPasswordResetForm(forms.Form):

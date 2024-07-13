@@ -1,13 +1,16 @@
 {% for f in form %}
     <div class="field_block">
         <div class="form_label">{{ f.label }}:</div>
-        <div class="form_input">{{ f }}</div>
         {% for e in f.errors %}
-            <div class="form_errors">{{ e }}</div>
+            <div class="form_errors"># {{ e }}</div>
         {% endfor %}
+        <div class="form_input" id="input-{{ forloop.counter }}">{{ f }}</div>
+        {% if register %}
+            {% include 'users/includes/register_form.html' %}
+        {% endif %}
     </div>
 {% endfor %}
 
 {% for e in form.non_field_errors %}
-    <div class="form_errors">{{ e | safe }}</div>
+    <div class="form_errors"># {{ e | safe }}</div>
 {% endfor %}

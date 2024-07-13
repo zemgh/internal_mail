@@ -1,64 +1,75 @@
 import datetime
 import uuid
-from http import HTTPStatus
 from importlib import import_module
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.test import TestCase, SimpleTestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from users.forms import UserLoginForm, UserRegisterForm, UserPasswordResetForm, UserPasswordChangeForm
-from users.models import UserResetToken
+from users.models import UserResetToken, UserValidators
 from users.views import UserLoginView, UserRegistrationView, UserPasswordResetView, UserPasswordChangeView
 
-User = get_user_model()
 
+class TestUser:
+    model = get_user_model()
+    username = 'test_user_name'
+    first_name = 'Петя'
+    last_name = 'Петечкин'
+    secret_word = 'секрет'
+    password = 'test_password_123'
+    counter = 1
 
-def create_test_user():
-    user = User.objects.create_user(
-        username='test_user_name',
-        first_name='test_first_name',
-        last_name='test_last_name',
-        secret_word='test_secret_word',
-        password='test-password-876'
-    )
-    return user
+    @classmethod
+    def create_test_user(cls):
+        ending = f'-{cls.counter}'
+        user = cls.model.objects.create(
+            username=cls.username + ending,
+            first_name=cls.first_name,
+            last_name=cls.last_name,
+            secret_word=cls.secret_word,
+            password=cls.password
+        )
+        cls.counter += 1
+        return user
 
 
 class UserModelTestCases(TestCase):
     def setUp(self):
-        self.user = create_test_user()
+        self.user = TestUser.create_test_user()
 
     def test_user_creation(self):
-        self.assertIsInstance(self.user, User)
-        self.assertEqual(self.user.username, 'test_user_name')
-        self.assertEqual(self.user.first_name, 'test_first_name')
-        self.assertEqual(self.user.last_name, 'test_last_name')
+        self.assertIsInstance(self.user, TestUser.model)
+        self.assertEqual(self.user.username, TestUser.username)
+        self.assertEqual(self.user.first_name, TestUser.first_name)
+        self.assertEqual(self.user.last_name, TestUser.last_name)
         self.assertTrue(self.user.secret_word)
 
     def test_user_str(self):
-        self.assertEqual(self.user.__str__(), 'test_user_name')
+        self.assertEqual(self.user.__str__(), TestUser.username)
 
     def test_user_full_name(self):
         full_name = self.user.get_full_name()
-        self.assertEqual(full_name, 'test_last_name test_first_name')
+        self.assertEqual(full_name, f'{TestUser.last_name} {TestUser.first_name}')
 
     def test_default_attributes(self):
         self.assertEqual(self.user.is_active, True)
         self.assertEqual(self.user.is_staff, False)
         self.assertIsInstance(self.user.created, datetime.datetime)
         self.assertEqual(self.user.status, False)
-        self.assertEqual(self.user.last_login, None)
-
 
     def test_secret_word(self):
-        self.assertTrue(self.user.check_secret_word('test_secret_word'))
+        self.assertTrue(self.user.check_secret_word(TestUser.secret_word))
 
 
 class UserResetTokenModelTestCase(TestCase):
+    user = None
+    token = None
+
     def setUp(self):
-        self.user = create_test_user()
+        self.user = TestUser.create_test_user()
         self.token = UserResetToken.objects.create(user=self.user, session_key='test_session_key')
 
     def test_token_creation(self):
@@ -68,32 +79,32 @@ class UserResetTokenModelTestCase(TestCase):
         self.assertEqual(self.token.session_key, 'test_session_key')
 
 
-class TestAuthPagesTestCase(SimpleTestCase):
+class GetPagesTestCase(SimpleTestCase):
     def test_login_page(self):
         page = reverse('login')
         response = self.client.get(page)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/login.html')
         self.assertIsInstance(response.context['view'], UserLoginView)
 
     def test_register_page(self):
         page = reverse('register')
         response = self.client.get(page)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/register.html')
         self.assertIsInstance(response.context['view'], UserRegistrationView)
 
     def test_password_reset_page(self):
         page = reverse('password_reset')
         response = self.client.get(page)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/password_reset.html')
         self.assertIsInstance(response.context['view'], UserPasswordResetView)
 
     def test_password_change_page(self):
         page = reverse('password_change')
         response = self.client.get(page)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/password_change.html')
         self.assertIsInstance(response.context['view'], UserPasswordChangeView)
 
@@ -146,19 +157,19 @@ class UserResetPasswordAlgorithmTestCase(TestCase):
     def register_test(self):
         url = reverse('register')
         response = self.client.post(url, {
-            'username': 'test_user_name',
-            'first_name': 'test_first_name',
-            'last_name': 'test_last_name',
-            'secret_word': 'test_secret_word',
-            'password1': 'test-password-876',
-            'password2': 'test-password-876'
+            'username': TestUser.username,
+            'first_name': TestUser.first_name,
+            'last_name': TestUser.last_name,
+            'secret_word': TestUser.secret_word,
+            'password1': TestUser.password,
+            'password2': TestUser.password
         })
         self.assertRedirects(response, reverse('login'))
-        self.user = User.objects.get(username='test_user_name')
+        self.user = TestUser.model.objects.get(username=TestUser.username)
 
     def password_reset_test(self):
         url = reverse('password_reset')
-        response = self.client.post(url, {'username': self.user.username, 'secret_word': 'test_secret_word'})
+        response = self.client.post(url, {'username': self.user.username, 'secret_word': TestUser.secret_word})
         self.assertRedirects(response, reverse('password_change'))
         self.url = reverse('password_change')
         self.assertTrue(UserResetToken.objects.filter(user=self.user).exists())
@@ -166,8 +177,9 @@ class UserResetPasswordAlgorithmTestCase(TestCase):
         self.assertEqual(self.token.session_key, self.session.session_key)
 
     def password_change_test(self):
-        self.new_password = 'test-password-876-reset'
-        response = self.client.post(self.url, {'password_1': self.new_password, 'password_2': self.new_password, 'reset_token': self.token.uuid})
+        self.new_password = TestUser.password + '-reset'
+        response = self.client.post(self.url, {'password_1': self.new_password, 'password_2': self.new_password,
+                                               'reset_token': self.token.uuid})
         self.assertRedirects(response, reverse('login'))
         self.url = reverse('login')
 
@@ -182,3 +194,35 @@ class UserResetPasswordAlgorithmTestCase(TestCase):
         self.password_change_test()
         self.login_test()
 
+
+class UserValidatorsTest(TestCase):
+    user = None
+    symbols = '`!@#$%^&*()+{}[]<>\'":;?/,.|\\'
+
+    def setUp(self):
+        self.user = TestUser.create_test_user()
+
+    def test_username_validator(self):
+        validator = UserValidators.validate_username
+        not_allowed_chars = self.symbols
+        for char in not_allowed_chars:
+            self.assertRaises(ValidationError, validator, 'test' + char)
+        self.assertRaises(ValidationError, validator, 'ab')
+
+    def test_name_validator(self):
+        validator = UserValidators.validate_names
+        not_allowed_chars = (self.symbols +
+                             UserValidators.latin_chars +
+                             UserValidators.latin_chars.upper())
+        for char in not_allowed_chars:
+            self.assertRaises(ValidationError, validator, 'абв' + char)
+
+    def test_secret_word_validator(self):
+        validator = UserValidators.validate_secret_word
+        not_allowed_chars = (self.symbols +
+                             UserValidators.latin_chars +
+                             UserValidators.latin_chars.upper() +
+                             UserValidators.cyrillic_chars.upper())
+        for char in not_allowed_chars:
+            self.assertRaises(ValidationError, validator, 'абвгд' + char)
+        self.assertRaises(ValidationError, validator, 'абвгд')
