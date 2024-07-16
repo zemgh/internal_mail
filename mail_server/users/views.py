@@ -1,5 +1,7 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.views import LoginView
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import FormView, CreateView
 
@@ -79,6 +81,11 @@ class UserPasswordChangeView(FormView):
         user.save()
         token.delete()
         return super().form_valid(form)
+
+
+def user_logout(request):
+    logout(request)
+    return redirect('login')
 
 
 

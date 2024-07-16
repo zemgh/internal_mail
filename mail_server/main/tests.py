@@ -1,4 +1,5 @@
 import datetime
+from typing import Callable, Any
 
 from django.test import TestCase, SimpleTestCase
 from django.urls import reverse
@@ -7,12 +8,28 @@ from main.models import Mail
 from users.tests import TestUser
 
 
+# class TestUsers(TestUser):
+#     counter = 1
+#
+#     @classmethod
+#     def create_test_users(cls):
+#         ending = f'-{cls.counter}'
+#         user = cls.model.objects.create(
+#             username=cls.username + ending,
+#             first_name=cls.first_name,
+#             last_name=cls.last_name,
+#             secret_word=cls.secret_word,
+#             password=cls.password
+#         )
+#         cls.counter += 1
+#         return user
+
+
 class TestMail:
     model = Mail
     subject = 'Test mail subject'
     message = 'Test mail message'
-    user = TestUser.create_test_user
-
+    user = lambda: TestUser.create_test_user(multiple=True)
 
     @classmethod
     def create_test_mail(cls):
@@ -26,8 +43,7 @@ class TestMail:
         return mail
 
 
-
-class GetPagesTestCase(TestCase):
+class GetPagesTestCase(SimpleTestCase):
     def test_main_page(self):
         main_page = reverse('main')
         response = self.client.get(main_page)

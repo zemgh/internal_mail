@@ -2,6 +2,7 @@
     background-color: tan;
     border-radius: 5px;
     padding: 10px;
+    box-sizing: border-box;
 }
 
 div.page{
@@ -16,12 +17,12 @@ div.page{
 div.menu{
     display: flex;
     flex-direction: column;
-    width: 15%;
+    width: 20%;
     gap: 10px;
     height: min-content;
 }
 
-button.menu_button{
+button.new_mail_button{
     width: 70%;
     align-self: center;
     border: 0;
@@ -40,6 +41,7 @@ div.menu_line{
     display: flex;
     padding: 5px 10px 5px 10px;
     user-select: none;
+    box-sizing: border-box;
 }
 
 div.menu_line:hover{
@@ -55,41 +57,133 @@ div.menu_line_counter{
 
 
 
-/*    Почта    */
+
+/*    Почта   */
 
 div.mails{
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: 70%;
+    width: 60%;
     height: 700px;
 }
 
-div.mails_filter_block{
+/*    Почта/список    */
+
+div.mails_filter{
     width: 100%;
     height: 50px;
     background-color: gray;
 }
 
-div.mails_mails_block{
+div.mails_block{
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    height: 50px;
-    background-color: gray;
+    gap: 5px;
 }
+
+div.mails_line{
+    display: flex;
+    padding: 5px 10px 5px 10px;
+    background-color: gray;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    user-select: none;
+}
+
+div.mails_line:hover{
+    background-color: white;
+}
+
+div.mails_line_sender{
+    width: 30%;
+    padding-left: 10px;
+}
+
+div.mails_line_subject{
+    width: 60%;
+}
+
+div.mails_line_datetime{
+    width: 10%;
+    text-align: right;
+}
+
+/*    Почта/письмо   */
 
 div.mails_mail{
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    height: 50px;
+    gap: 10px;
+    box-sizing: border-box;
 }
 
+div.mails_mail_options{
+    display: flex;
+    width: 100%;
+    gap: 10px;
+}
 
+div.mails_mail_options_button{
+    user-select: none;
+    background-color: gray;
+    padding: 10px;
+}
+
+div.mails_mail_options_button:hover{
+    background-color: white;
+}
+
+div.mails_mail_info{
+    background-color: cornflowerblue;
+    padding: 10px;
+}
+
+div.mails_mail_message{
+    width: 100%;
+    padding: 10px;
+}
+
+/*    Почта/письмо/Форма   */
+
+form.mails_new_mail_form{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input.mails_new_mail_receivers{
+    width: 100px;
+    background-color: wheat;
+    box-sizing: border-box;
+    border: 0;
+    outline:none
+}
+
+input.mails_new_mail_subject{
+    width: 100px;
+    background-color: wheat;
+    box-sizing: border-box;
+    border: 0;
+    outline:none
+}
+
+input.mails_new_mail_message{
+    background-color: wheat;
+    box-sizing: border-box;
+    border: 0;
+    outline:none
+}
 
 /*    Контакты    */
 
 div.contacts{
     display: flex;
     flex-direction: column;
-    width: 15%;
+    width: 20%;
     height: 100px;
     gap: 10px;
 }

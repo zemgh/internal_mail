@@ -1,5 +1,6 @@
 <div class="contacts">
-    <div class="contacts_options">Опции</div>
+    <div class="contacts_options">{{ user }}</div>
+    <a href="{% url 'logout' %}">logout</a>
     <div class="contacts_list">
         {% for u in users %}
         <div class="contacts_user">{{ u }}</div>

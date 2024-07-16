@@ -20,19 +20,23 @@ class TestUser:
     last_name = 'Петечкин'
     secret_word = 'секрет'
     password = 'test_password_123'
-    counter = 1
+    counter = 0
 
     @classmethod
-    def create_test_user(cls):
-        ending = f'-{cls.counter}'
+    def create_test_user(cls, multiple=False):
+        def create_multiple_users_name():
+            username = f'{cls.username}-{cls.counter}'
+            cls.counter += 1
+            return username
+
         user = cls.model.objects.create(
-            username=cls.username + ending,
+            username=cls.username if not multiple else create_multiple_users_name(),
             first_name=cls.first_name,
             last_name=cls.last_name,
             secret_word=cls.secret_word,
             password=cls.password
         )
-        cls.counter += 1
+
         return user
 
 

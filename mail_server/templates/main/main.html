@@ -1,19 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
     {% load static %}
     <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
 
     <div class="page">
-        {% include 'main/includes/menu.html' %}
-        {% include 'main/includes/mails.html' %}
-        {% include 'main/includes/contacts.html' %}
+        {% include 'main/menu.html' %}
+        {% include 'main/mails.html' %}
+        {% include 'main/contacts.html' %}
     </div>
 
 {% endblock %}
 
 
 {% block scripts %}
+
+    <script>
+        window.ws_connection = new WebSocket('{{ ws_url }}')
+        ws_connection.onopen = (event) => console.log('connected')
+    </script>
+
+    <script src="{% static "main/js/utils.js"%}"></script>
+    <script src="{% static "main/js/on_message.js"%}"></script>
 
 {% endblock %}
