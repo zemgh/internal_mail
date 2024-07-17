@@ -27,14 +27,17 @@ button.new_mail_button{
     align-self: center;
     border: 0;
     font-size: 18px;
+    background-color: yellow;
+    border-radius: 5px;
+
 }
 
-button.menu_button:hover{
+button.new_mail_button:hover{
     background-color: white;
 }
 
-button.menu_button:active{
-    filter: brightness(80%);
+button.new_mail_button:active{
+    filter: brightness(70%);
 }
 
 div.menu_line{
@@ -42,6 +45,7 @@ div.menu_line{
     padding: 5px 10px 5px 10px;
     user-select: none;
     box-sizing: border-box;
+    border-radius: 5px;
 }
 
 div.menu_line:hover{
@@ -91,10 +95,15 @@ div.mails_line{
     box-sizing: border-box;
     align-items: center;
     user-select: none;
+    border-radius: 5px;
 }
 
 div.mails_line:hover{
     background-color: white;
+}
+
+input.mails_line_checkbox{
+
 }
 
 div.mails_line_sender{
@@ -129,8 +138,10 @@ div.mails_mail_options{
 
 div.mails_mail_options_button{
     user-select: none;
-    background-color: gray;
+    background-color: forestgreen;
     padding: 10px;
+    border-radius: 5px;
+    border: 0;
 }
 
 div.mails_mail_options_button:hover{
@@ -140,6 +151,7 @@ div.mails_mail_options_button:hover{
 div.mails_mail_info{
     background-color: cornflowerblue;
     padding: 10px;
+    border-radius: 5px;
 }
 
 div.mails_mail_message{
@@ -153,30 +165,47 @@ form.mails_new_mail_form{
     display: flex;
     flex-direction: column;
     gap: 10px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+div.mails_new_mail_line{
+    display: flex;
+    gap: 10px;
+}
+div.mails_new_mail_label{
+    width: 8%;
 }
 
 input.mails_new_mail_receivers{
-    width: 100px;
     background-color: wheat;
     box-sizing: border-box;
     border: 0;
-    outline:none
+    outline:none;
+    border-radius: 5px;
 }
 
 input.mails_new_mail_subject{
-    width: 100px;
     background-color: wheat;
     box-sizing: border-box;
     border: 0;
-    outline:none
+    outline:none;
+    border-radius: 5px;
 }
 
-input.mails_new_mail_message{
+textarea.mails_new_mail_message{
     background-color: wheat;
     box-sizing: border-box;
     border: 0;
-    outline:none
+    outline:none;
+    resize: none;
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
 }
+
+
+
 
 /*    Контакты    */
 

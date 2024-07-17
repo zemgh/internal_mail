@@ -71,6 +71,7 @@ class User(AbstractBaseUser):
         (1, 'online')
     )
     status = models.BooleanField(choices=STATUS_CHOICES, default=0)
+    unread_counter = models.IntegerField(default=0)
 
     objects = CustomUserManager()
 

@@ -15,12 +15,13 @@
 
 {% block scripts %}
 
+    <script src="{% static "main/js/elements.js"%}"></script>
+    <script src="{% static "main/js/init.js"%}"></script>
+
     <script>
-        window.ws_connection = new WebSocket('{{ ws_url }}')
-        ws_connection.onopen = (event) => console.log('connected')
+        init('{{ ws_url }}')
     </script>
 
-    <script src="{% static "main/js/utils.js"%}"></script>
     <script src="{% static "main/js/on_message.js"%}"></script>
 
 {% endblock %}
