@@ -34,17 +34,15 @@ class TestConsumer(WebsocketConsumer):
             self.create_mail(data)
 
     def create_mail(self, new_mail):
-        print(self.user, type(self.user))
         mail = self.mail.objects.create(
             sender=self.model_user,
             subject=new_mail['subject'],
             message=new_mail['message']
         )
         receivers = User.objects.filter(username__in=new_mail['receivers'])
-        print('receivers ', receivers)
         mail.receivers.set(receivers)
         mail.save()
-        print(mail.__dict__)
+        print(mail)
         self.send_mails()
 
 

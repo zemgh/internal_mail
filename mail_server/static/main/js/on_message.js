@@ -4,7 +4,7 @@ ws_connection.onmessage = (event) => {
         case 'get_mails': {
             window.mail_list = message.mails_list;
             window.deleted_mail_list = message.deleted_mails_list;
-            get_received_mails();
+            window.MailManager.received()
         }
     }
 }

@@ -2,6 +2,7 @@
 
 {% block content %}
     {% load static %}
+    <script src="{% static "main/js/elements.js"%}"></script>
     <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
 
     <div class="page">
@@ -15,7 +16,6 @@
 
 {% block scripts %}
 
-    <script src="{% static "main/js/elements.js"%}"></script>
     <script src="{% static "main/js/init.js"%}"></script>
 
     <script>
