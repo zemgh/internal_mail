@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
     {% load static %}
     <script src="{% static "main/js/elements.js"%}"></script>
     <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
@@ -17,11 +18,7 @@
 {% block scripts %}
 
     <script src="{% static "main/js/init.js"%}"></script>
-
-    <script>
-        init('{{ ws_url }}')
-    </script>
-
+    <script>init('{{ ws_url }}')</script>
     <script src="{% static "main/js/on_message.js"%}"></script>
 
 {% endblock %}

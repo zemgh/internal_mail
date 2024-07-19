@@ -32,6 +32,8 @@ class TestConsumer(WebsocketConsumer):
             self.delete_mails(data['mails_list'])
         elif request_type == 'create_mail':
             self.create_mail(data)
+        elif request_type == 'create_test_mail':
+            self.create_test_mail()
 
     def create_mail(self, new_mail):
         mail = self.mail.objects.create(
@@ -42,7 +44,7 @@ class TestConsumer(WebsocketConsumer):
         receivers = User.objects.filter(username__in=new_mail['receivers'])
         mail.receivers.set(receivers)
         mail.save()
-        print(mail)
+
         self.send_mails()
 
 
@@ -54,19 +56,33 @@ class TestConsumer(WebsocketConsumer):
 
     def send_mails(self):
         all_mails = self.user.received_mails.all()
-        mails = all_mails.filter(deleted=False)
-        deleted_mails = all_mails.filter(deleted=True)
+
+        mails = all_mails.filter(deleted=False)[:20]
+        sent_mails = self.user.sent_mails.all()[:20]
+        deleted_mails = all_mails.filter(deleted=True)[:20]
 
         mails_data = self.mail_serializer.get_data_for_json(queryset=mails)
+        sent_mails_data = self.mail_serializer.get_data_for_json(queryset=sent_mails)
         deleted_mails_data = self.mail_serializer.get_data_for_json(queryset=deleted_mails)
+
         data = {
             'type': 'get_mails',
-            'mails_list': mails_data,
-            'deleted_mails_list': deleted_mails_data}
+            'received': mails_data,
+            'sent': sent_mails_data,
+            'deleted': deleted_mails_data}
 
         self.send(json.dumps(data))
 
     def disconnect(self, code):
         print('disconnecting: ', code)
 
+    def create_test_mail(self):
+        mail = self.mail.objects.create(
+            sender=self.model_user,
+            subject='test_mail',
+            message='this is a test mail',
+        )
+        mail.receivers.add(self.model_user)
+        mail.save()
 
+        self.send_mails()

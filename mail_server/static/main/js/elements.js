@@ -16,15 +16,15 @@ window.ElementsManager.samples = {
 
 
 function create_mails_block() {
-    // ***    Блок писем    ***
+    //      Блок писем
     return window.ElementsManager.create_node.div('mails_block', 'mails_block');
 }
 
 
 function create_mails_line() {
-    // ***    Письмо в списке    ***
+    //      Письмо в списке
     let line = ElementsManager.create_node.div('mb_line');
-    let checkbox = ElementsManager.create_node.input('checkbox', 'mb_line_checkbox');
+    let checkbox = ElementsManager.create_node.input('checkbox', 'mb_line_checkbox', 'checkbox');
     let sender = ElementsManager.create_node.div('mb_line_sender', 'sender');
     let subject = ElementsManager.create_node.div('mb_line_subject', 'subject');
     let datetime = ElementsManager.create_node.div('mb_line_datetime', 'datetime');
@@ -35,7 +35,7 @@ function create_mails_line() {
 
 
 function create_mail() {
-    // ***    Просмотр письма    ***
+    //      Просмотр письма
     let main_block = ElementsManager.create_node.div('mail', 'mail');
     let options_block = ElementsManager.create_node.div('m_options', 'm_options');
     create_buttons(options_block);
@@ -55,7 +55,7 @@ function create_mail() {
 
 
 function create_new_mail() {
-    // ***    Создание письма    ***
+    //      Создание письма
     let main_block = ElementsManager.create_node.form('nm_form', 'nm_form');
     let options_block = ElementsManager.create_node.div('m_options', 'm_options');
     create_buttons(options_block);
@@ -76,8 +76,8 @@ function create_new_mail() {
         let line = ElementsManager.create_node.div('nm_line');
         let input = ElementsManager.create_node.input('text','nm_receivers_subject', name);
         let label = ElementsManager.create_node.div('nm_label', undefined, text);
-        line.appendChild(input);
         line.appendChild(label);
+        line.appendChild(input);
         return line;
     }
 }
