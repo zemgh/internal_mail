@@ -30,6 +30,8 @@ class TestConsumer(WebsocketConsumer):
             self.send_mails()
         elif request_type == 'delete_mails':
             self.delete_mails(data['mails_list'])
+        elif request_type == 'recovery_mails':
+            self.recovery_mails(data['mails_list'])
         elif request_type == 'create_mail':
             self.create_mail(data)
         elif request_type == 'create_test_mail':
@@ -47,12 +49,6 @@ class TestConsumer(WebsocketConsumer):
 
         self.send_mails()
 
-
-    def delete_mails(self, mails_list):
-        self.mail.objects.filter(id__in=mails_list).update(deleted=True)
-        self.user.unread_counter -= len(mails_list)
-
-        self.send_mails()
 
     def send_mails(self):
         all_mails = self.user.received_mails.all()
@@ -73,12 +69,25 @@ class TestConsumer(WebsocketConsumer):
 
         self.send(json.dumps(data))
 
+
+    def delete_mails(self, mails_list):
+        self.mail.objects.filter(id__in=mails_list).update(deleted=True)
+
+        self.send_mails()
+
+
+    def recovery_mails(self, mails_list):
+        self.mail.objects.filter(id__in=mails_list).update(deleted=False)
+
+        self.send_mails()
+
     def disconnect(self, code):
         print('disconnecting: ', code)
 
     def create_test_mail(self):
+        user = User.objects.get(username='test_user')
         mail = self.mail.objects.create(
-            sender=self.model_user,
+            sender=user,
             subject='test_mail',
             message='this is a test mail',
         )

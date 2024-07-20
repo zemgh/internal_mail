@@ -1,3 +1,6 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'main/css/menu.css' %}">
+
 <div class="menu">
 
     <button type="submit" class="new_mail_button">Написать</button>
@@ -7,8 +10,8 @@
         <div class="menu_line_counter">1</div>
     </div>
 
-    <div class="menu_line">
-        <div class="menu_line_option" id="sent_mails">Отправленные</div>
+    <div class="menu_line" id="sent_mails">
+        <div class="menu_line_option">Отправленные</div>
         <div class="menu_line_counter">1</div>
     </div>
 
@@ -24,5 +27,4 @@
 
 </div>
 
-{% load static %}
 <script src="{% static 'main/js/menu_block.js' %}"></script>

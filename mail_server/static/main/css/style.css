@@ -11,59 +11,6 @@ div.page{
 }
 
 
-
-/*    Меню    */
-
-div.menu{
-    display: flex;
-    flex-direction: column;
-    width: 20%;
-    gap: 10px;
-    height: min-content;
-}
-
-button.new_mail_button{
-    width: 70%;
-    align-self: center;
-    border: 0;
-    font-size: 18px;
-    background-color: yellow;
-    border-radius: 5px;
-
-}
-
-button.new_mail_button:hover{
-    background-color: white;
-}
-
-button.new_mail_button:active{
-    filter: brightness(70%);
-}
-
-div.menu_line{
-    display: flex;
-    padding: 5px 10px 5px 10px;
-    user-select: none;
-    box-sizing: border-box;
-    border-radius: 5px;
-}
-
-div.menu_line:hover{
-    background-color: white;
-}
-
-div.menu_line_option{
-    width: 100%
-}
-
-div.menu_line_counter{
-}
-
-
-
-
-
-
 /*    Контакты    */
 
 div.contacts{

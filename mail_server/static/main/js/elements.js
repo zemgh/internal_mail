@@ -1,122 +1,149 @@
 window.ElementsManager = {}
 
-window.ElementsManager.create_node = {
-        div: create_div,                      // css id text
-        input: create_input,                  // type css name
-        form: create_form,                    // css
-        textarea: create_textarea,            // css, name
-        options_button: create_options_button // id
+window.ElementsManager.creater = {
+    base_node: create_base_node,
+    append: append_child_elements,
+    clear_checkboxes: clear_lines_checkboxes
 }
+
+window.ElementsManager.options_blocks = {
+    received: create_mail_options_block('received'),
+    deleted: create_mail_options_block('deleted'),
+    sent: create_mail_options_block('sent'),
+    new_mail: create_mail_options_block('new'),
+    received_list: create_mails_list_options_block('received_list'),
+    deleted_list: create_mails_list_options_block('deleted_list')
+}
+
 window.ElementsManager.samples = {
         mails_block: create_mails_block(),
         mails_line: create_mails_line(),
-        mail: create_mail(),
-        new_mail: create_new_mail()
+        mail_view: create_mail_view(),
+        new_mail: create_new_mail_form(),
+}
+
+function create_base_node(tag, options) {
+    let node = document.createElement(tag);
+    Object.assign(node, options)
+    return node;
+}
+
+
+function append_child_elements(parent, array) {
+    array.forEach(el => parent.appendChild(el));
+    return parent;
 }
 
 
 function create_mails_block() {
     //      Блок писем
-    return window.ElementsManager.create_node.div('mails_block', 'mails_block');
+
+    return ElementsManager.creater.base_node('div', {className: 'mails_block'})
 }
 
 
 function create_mails_line() {
     //      Письмо в списке
-    let line = ElementsManager.create_node.div('mb_line');
-    let checkbox = ElementsManager.create_node.input('checkbox', 'mb_line_checkbox', 'checkbox');
-    let sender = ElementsManager.create_node.div('mb_line_sender', 'sender');
-    let subject = ElementsManager.create_node.div('mb_line_subject', 'subject');
-    let datetime = ElementsManager.create_node.div('mb_line_datetime', 'datetime');
+    let line = ElementsManager.creater.base_node('div', {className: 'mb_line'});
+    let inner_line = ElementsManager.creater.base_node('div', {className: 'mb_inner_line', id: 'inner_line'});
+    let sender = ElementsManager.creater.base_node('div', {className: 'mb_line_sender', id: 'sender'});
+    let subject = ElementsManager.creater.base_node('div', {className: 'mb_line_subject', id: 'subject'});
+    let datetime = ElementsManager.creater.base_node('div', {className: 'mb_line_datetime', id: 'datetime'});
 
-    [checkbox, sender, subject, datetime].forEach(el => line.appendChild(el));
-    return line;
+    ElementsManager.creater.append(inner_line, [sender, subject, datetime]);
+    return ElementsManager.creater.append(line, [inner_line]);
 }
 
 
-function create_mail() {
+function create_mail_view() {
     //      Просмотр письма
-    let main_block = ElementsManager.create_node.div('mail', 'mail');
-    let options_block = ElementsManager.create_node.div('m_options', 'm_options');
-    create_buttons(options_block);
-    let info = ElementsManager.create_node.div('m_info', 'm_info');
-    let message = ElementsManager.create_node.div('m_message', 'm_message');
 
-    [options_block, info, message].forEach(el => main_block.appendChild(el));
-    return main_block;
+    let block = ElementsManager.creater.base_node('div', {className: 'mail'});
+    let info = ElementsManager.creater.base_node('div', {className: 'm_info'});
+    let message = ElementsManager.creater.base_node('div', {className: 'm_message'});
 
-    function create_buttons(options_block) {
-        let back = create_options_button('back', 'Назад');
-        let reply = create_options_button('reply', 'Ответить');
-        let del = create_options_button('del', 'Удалить');
-    [back, reply, del].forEach(el => options_block.appendChild(el));
-    }
+    return ElementsManager.creater.append(block, [info, message]);
 }
 
 
-function create_new_mail() {
+function create_new_mail_form() {
     //      Создание письма
-    let main_block = ElementsManager.create_node.form('nm_form', 'nm_form');
-    let options_block = ElementsManager.create_node.div('m_options', 'm_options');
-    create_buttons(options_block);
+
+    let main_block = ElementsManager.creater.base_node('form', {className: 'nm_form'});
+    let options_block = ElementsManager.options_blocks['new_mail'].cloneNode(true);
     let receivers = create_input_with_label('receivers', 'Кому:');
     let subject = create_input_with_label('subject', 'Тема:');
-    let message = ElementsManager.create_node.textarea('nm_message', 'message');
+    let message = ElementsManager.creater.base_node('textarea', {className: 'nm_message', id: 'message'});
 
-    [options_block, receivers, subject, message].forEach(el => main_block.appendChild(el));
-    return main_block;
+    return ElementsManager.creater.append(main_block, [options_block, receivers, subject, message]);
 
-    function create_buttons(options_block) {
-        let back = create_options_button('back', 'Назад');
-        let send = create_options_button('send', 'Отправить');
-        [back, send].forEach(el => options_block.appendChild(el));
-    }
+    function create_input_with_label(id, text) {
+        let line = ElementsManager.creater.base_node('div',{className: 'nm_line'});
+        let input = ElementsManager.creater.base_node('input', {type: 'text', className: 'nm_receivers_subject', id: id});
+        let label = ElementsManager.creater.base_node('div', {className: 'nm_label', innerText: text});
 
-    function create_input_with_label(name, text) {
-        let line = ElementsManager.create_node.div('nm_line');
-        let input = ElementsManager.create_node.input('text','nm_receivers_subject', name);
-        let label = ElementsManager.create_node.div('nm_label', undefined, text);
-        line.appendChild(label);
-        line.appendChild(input);
-        return line;
+        return ElementsManager.creater.append(line, [label, input]);
     }
 }
 
 
-// Создание базовых элементов
+function create_mail_options_block(type) {
+    //      Создание блока опций
 
-function create_div(css, id=undefined, text=undefined) {
-    let el = document.createElement('div');
-    el.className = css;
-    if (id) el.id = id;
-    if (text) el.innerText = text;
-    return el;
+    let options_block = ElementsManager.creater.base_node('div', {className: 'm_options'});
+    let back = create_options_button('back', 'Назад');
+    ElementsManager.creater.append(options_block, [back]);
+
+    if (type === 'received') {
+        let reply = create_options_button('reply', 'Ответить');
+        let del = create_options_button('del', 'Удалить');
+        ElementsManager.creater.append(options_block, [reply, del]);
+    }
+
+    else if (type === 'deleted') {
+        let reply = create_options_button('reply', 'Ответить');
+        let recovery = create_options_button('recovery', 'Восстановить');
+        ElementsManager.creater.append(options_block, [reply, recovery]);
+    }
+
+    else if (type === 'new') {
+        let sent = create_options_button('send', 'Отравить');
+        ElementsManager.creater.append(options_block, [sent]);
+    }
+
+    function create_options_button(id, text) {
+        return ElementsManager.creater.base_node('div', {className: 'm_options_button', id: id, innerText: text});
 }
 
-function create_input(type, css=undefined, name=undefined) {
-    let el = document.createElement('input');
-    el.type = type;
-    el.className = css;
-    el.name = name;
-    el.id = name;
-    return el;
+    return options_block;
 }
 
-function create_form(css, id=undefined) {
-    let el = document.createElement('form');
-    el.className = css;
-    el.id = id;
-    return el;
+
+function create_mails_list_options_block(type) {
+    let options_block = ElementsManager.creater.base_node('div', {className: 'mb_options'});
+    let cancel = create_options_button('cancel', 'Снять выделение');
+    options_block.appendChild(cancel);
+
+    if (type === 'received_list') {
+        let del = create_options_button('mass_delete', 'Удалить выбранные');
+        options_block.appendChild(del);
+    }
+
+    else if (type === 'deleted_list') {
+        let recovery = create_options_button('mass_recovery', 'Восстановить выбранные');
+        recovery.disabled = true;
+        options_block.appendChild(recovery);
+    }
+
+    function create_options_button(id, text) {
+        return ElementsManager.creater.base_node('div', {className: 'mb_options_button_disabled', id: id, innerText: text});
+    }
+
+    return options_block;
 }
 
-function create_textarea(css, name) {
-    let el = document.createElement('textarea');
-    el.className = css;
-    el.name = name;
-    el.id = name;
-    return el;
-}
 
-function create_options_button(id, text) {
-    return ElementsManager.create_node.div('m_options_button', id, text);
+function clear_lines_checkboxes(mails_block) {
+    let boxes = mails_block.querySelectorAll('.mb_line_checkbox');
+    boxes.forEach(el => el.checked = false);
 }

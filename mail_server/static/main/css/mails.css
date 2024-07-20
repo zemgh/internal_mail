@@ -6,7 +6,9 @@ div.mails{
     height: 700px;
 }
 
-/*    Фильтр    */
+
+
+/*    Письма-Фильтр    */
 
 div.mails_filter{
     width: 100%;
@@ -16,8 +18,37 @@ div.mails_filter{
 
 
 
+/*    Письма-Опции    */
 
-/*    Письма    */
+div.mb_options{
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    padding-bottom: 10px;
+    padding-left: 25px;
+}
+
+div.mb_options_button, div.mb_options_button_disabled{
+    user-select: none;
+    background-color: forestgreen;
+    padding: 5px;
+    border-radius: 5px;
+    border: 0;
+    font-size: 14px;
+}
+
+
+div.mb_options_button_disabled{
+    background-color: gray;
+}
+
+div.mb_options_button:hover{
+    background-color: white;
+}
+
+
+
+/*    Письма-список    */
 
 div.mails_block{
     display: flex;
@@ -28,6 +59,12 @@ div.mails_block{
 
 div.mb_line{
     display: flex;
+    width: 100%;
+    gap: 5px;
+}
+
+div.mb_inner_line{
+    display: flex;
     padding: 5px 10px 5px 10px;
     background-color: gray;
     width: 100%;
@@ -37,7 +74,7 @@ div.mb_line{
     border-radius: 5px;
 }
 
-div.mb_line:hover{
+div.mb_inner_line:hover{
     background-color: white;
 }
 
@@ -46,7 +83,6 @@ input.mb_line_checkbox{
 
 div.mb_line_sender{
     width: 30%;
-    padding-left: 10px;
 }
 
 div.mb_line_subject{
