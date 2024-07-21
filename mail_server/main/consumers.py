@@ -28,26 +28,16 @@ class TestConsumer(WebsocketConsumer):
         request_type = data.get('type')
         if request_type == 'get_mails':
             self.send_mails()
+        elif request_type == 'create_mail':
+            self.create_mail(data)
         elif request_type == 'delete_mails':
             self.delete_mails(data['mails_list'])
         elif request_type == 'recovery_mails':
             self.recovery_mails(data['mails_list'])
-        elif request_type == 'create_mail':
-            self.create_mail(data)
+        elif request_type == 'read_mails':
+            self.read_mails(data['mails_list'])
         elif request_type == 'create_test_mail':
             self.create_test_mail()
-
-    def create_mail(self, new_mail):
-        mail = self.mail.objects.create(
-            sender=self.model_user,
-            subject=new_mail['subject'],
-            message=new_mail['message']
-        )
-        receivers = User.objects.filter(username__in=new_mail['receivers'])
-        mail.receivers.set(receivers)
-        mail.save()
-
-        self.send_mails()
 
 
     def send_mails(self):
@@ -70,6 +60,19 @@ class TestConsumer(WebsocketConsumer):
         self.send(json.dumps(data))
 
 
+    def create_mail(self, new_mail):
+        mail = self.mail.objects.create(
+            sender=self.model_user,
+            subject=new_mail['subject'],
+            message=new_mail['message']
+        )
+        receivers = User.objects.filter(username__in=new_mail['receivers'])
+        mail.receivers.set(receivers)
+        mail.save()
+
+        self.send_mails()
+
+
     def delete_mails(self, mails_list):
         self.mail.objects.filter(id__in=mails_list).update(deleted=True)
 
@@ -80,6 +83,13 @@ class TestConsumer(WebsocketConsumer):
         self.mail.objects.filter(id__in=mails_list).update(deleted=False)
 
         self.send_mails()
+
+
+    def read_mails(self, mails_list):
+        self.mail.objects.filter(id__in=mails_list).update(read=True)
+
+        self.send_mails()
+
 
     def disconnect(self, code):
         print('disconnecting: ', code)

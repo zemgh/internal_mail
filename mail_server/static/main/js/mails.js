@@ -7,12 +7,15 @@ window.MailManager = {
     open: show_mail,
     create: create_mail
 }
-window.MailManager.handler = {
+window.MailManager.mails = {
     send: send_mail,
     delete: delete_mails,
     update: update_mails_and_mails_list,
-    recovery: recovery_mails
+    recovery: recovery_mails,
+    read: read_mails
 }
+
+window.MailManager.check = {}
 
 
 function get_received_mails() {
@@ -20,8 +23,8 @@ function get_received_mails() {
 
     window.current_page = 'received';
     if (window.mails_block == null)
-        window.mails_block = create_mails_block(window.mails_list);
-    show_mails_list(window.mails_block)
+        window.mails_block = create_mails_list(window.mails_list, window.current_page);
+    show_mails_block(window.mails_block)
 }
 
 
@@ -30,8 +33,8 @@ function get_sent_mails() {
 
     window.current_page = 'sent';
     if (window.sent_mails_block == null)
-        window.mails_block = create_mails_block(window.sent_mails_list, true);
-    show_mails_list(window.sent_mails_block)
+        window.mails_block = create_mails_list(window.sent_mails_list, window.current_page);
+    show_mails_block(window.sent_mails_block)
 }
 
 
@@ -40,13 +43,16 @@ function get_deleted_mails() {
 
     window.current_page = 'deleted';
     if (window.deleted_mails_block == null)
-        window.deleted_mails_block = create_mails_block(window.deleted_mails_list);
-    show_mails_list(window.deleted_mails_block)
+        window.deleted_mails_block = create_mails_list(window.deleted_mails_list, window.current_page);
+    show_mails_block(window.deleted_mails_block)
 }
 
 
 function show_mail(mail) {
     //      Показать письмо
+
+    if (!mail.read)
+        MailManager.mails.read([mail.id], false)
 
     let type;
     window.current_mail = mail;
@@ -77,7 +83,7 @@ function show_mail(mail) {
 
         let del = options_block.querySelector('#del');
         del.addEventListener('click', (event) =>
-            MailManager.handler.delete([mail.id]))
+            MailManager.mails.delete([mail.id]))
     }
 
     if (type === 'deleted') {
@@ -87,7 +93,7 @@ function show_mail(mail) {
 
         let recovery = options_block.querySelector('#recovery');
         recovery.addEventListener('click', (event) =>
-            MailManager.handler.recovery([mail.id]));
+            MailManager.mails.recovery([mail.id]));
     }
 
     MAILS.appendChild(mail_block)
@@ -106,7 +112,7 @@ function create_mail(reply=false, mail=undefined, back_type) {
 
     let form = ElementsManager.samples.new_mail.cloneNode(true);
     if (reply)
-        add_reply_attrs();
+        add_reply_attrs(form);
 
     let back = form.querySelector('#back');
     back.addEventListener('click', (event) => {
@@ -120,14 +126,15 @@ function create_mail(reply=false, mail=undefined, back_type) {
         let receivers = form.querySelector('#receivers').value;
         let subject = form.querySelector('#subject').value;
         let message = form.querySelector('#message').value;
-        MailManager.handler.send([receivers], subject, message);
+        MailManager.mails.send([receivers], subject, message);
     })
 
     MAILS.appendChild(form);
 
-    function add_reply_attrs() {
-        form.querySelector('#receivers').value = mail.receivers;
-        form.querySelector('#subject').value = `Re: ${mail.subject}`;
+    function add_reply_attrs(form) {
+        form.querySelector('#receivers').value = mail.sender;
+        form.querySelector('#subject').value =
+            (mail.subject.slice(0, 4) === 'Re: ') ? (mail.subject) : (`Re: ${mail.subject}`);
         form.querySelector('#message').value =
             '\n\n' +
             '*'.repeat(20) +
@@ -145,15 +152,20 @@ function create_mails_list(m_list, type) {
     mails_block.id = type;
 
     if (type !== 'sent') {
+        //      Создание блока опций
+
         let option = type === 'received' ? 'received_list' : 'deleted_list';
         let options_block = ElementsManager.options_blocks[option];
+        add_event_to_group_checkbox(options_block);
         mails_block.appendChild(options_block);
     }
 
     add_mails_to_block(m_list, mails_block);
     return mails_block;
 
-    function add_mails_to_block (m_list, block) {
+    function add_mails_to_block (m_list, mails_block) {
+        //      Добавление писем в блок
+
         for (let m of m_list) {
             let line = ElementsManager.samples.mails_line.cloneNode(true);
             let inner_line = line.querySelector('#inner_line');
@@ -161,7 +173,14 @@ function create_mails_list(m_list, type) {
             let subject = line.querySelector('#subject');
             let datetime = line.querySelector('#datetime');
 
+            if (m.read)
+                inner_line.className = 'mb_inner_line';
+            else
+                inner_line.className = 'mb_inner_line_unread';
+
             if (type !== 'sent') {
+                //      Добавление чекбокса письма
+
                 let checkbox = ElementsManager.creater.base_node('input', {type: 'checkbox', className: 'mb_line_checkbox'});
                 checkbox.id = m.id;
                 checkbox.addEventListener('change', (event) => {
@@ -171,67 +190,133 @@ function create_mails_list(m_list, type) {
                         let index = window.mails_selected.indexOf(checkbox.id);
                         window.mails_selected.splice(index, 1);
                     }
-                    check_buttons_status(block)
+
+                    check_buttons_status(mails_block)
+                    check_group_checkbox_status(mails_block)
                 })
 
                 line.insertBefore(checkbox, inner_line);
             }
 
-            if (type === 'sent') sender.innerText = m.receivers;
+            if (type === 'sent')
+                sender.innerText = m.receivers;
             else sender.innerText = m.sender;
 
             subject.innerText = m.subject;
             datetime.innerText = m.created.short;
 
-            inner_line.addEventListener('click', (event) =>
-                MailManager.open(m));
+            inner_line.addEventListener('click', (event) => {
+                MailManager.open(m);
+            })
 
-            block.appendChild(line);
+            mails_block.appendChild(line);
         }
     }
 
+    function add_event_to_group_checkbox(block=false, checkbox=false) {
+        //      Добавление эвента группового checkbox
+
+        if (!block)
+            block = document.querySelector('.mails_block')
+        if (!checkbox)
+            checkbox = block.querySelector('#group_checkbox');
+
+        checkbox.addEventListener('change', (event) => {
+            let checkboxes = mails_block.querySelectorAll('.mb_line_checkbox');
+            if (checkbox.checked === true) {
+                checkboxes.forEach(el => {
+                    el.checked = true;
+                    if (!window.mails_selected.includes(el.id))
+                        window.mails_selected.push(el.id);
+                });
+            }
+            else {
+                checkboxes.forEach(el => el.checked = false);
+                window.mails_selected = [];
+            }
+
+            check_buttons_status(mails_block)
+        })
+    }
+
+    function check_group_checkbox_status(block=false, checkbox=false) {
+        //      Проверка статута группового checkbox
+
+        if (!block)
+            block = document.querySelector('.mails_block')
+        if (!checkbox)
+            checkbox = block.querySelector('#group_checkbox');
+
+        if (window.mails_selected.length > 0 && checkbox.checked === false)
+            checkbox.checked = true;
+        else if (window.mails_selected.length === 0 && checkbox.checked === true)
+            checkbox.checked = false;
+    }
+
     function check_buttons_status(block) {
-        let disable_buttons = block.querySelectorAll('.mb_options_button_disabled');
-        if (window.mails_selected.length === 0 && disable_buttons.length === 0) {
+        //      Корректировка статуса (вкл/выкл) кнопок опций
+
+        if (window.mails_selected.length === 0) {
             let buttons = block.querySelectorAll('.mb_options_button');
-            buttons.forEach(el => el.className = 'mb_options_button_disabled');
+            if (buttons.length !== 0)
+                make_disabled(buttons);
+
+        } else if (window.mails_selected.length > 0) {
+            let buttons = block.querySelectorAll('.mb_options_button_disabled');
+            if (buttons.length !== 0) {
+                make_enabled(buttons);
+
+                if (type === 'received') {
+                    //      Кнопки удалить/прочитать
+
+                    let del = block.querySelector('#mass_delete');
+                    del.addEventListener('click', (event) => {
+                        MailManager.mails.delete(window.mails_selected, false);
+                        make_disabled(buttons);
+                    })
+
+                    let read = block.querySelector('#mass_read');
+                    read.addEventListener('click', (event) => {
+                        MailManager.mails.read(window.mails_selected, false);
+                        make_disabled(buttons);
+                        check_group_checkbox_status(block)
+                    })
+                }
+
+                if (type === 'deleted') {
+                    //      Кнопка восстановить
+
+                    let recovery = block.querySelector('#mass_recovery');
+                    recovery.addEventListener('click', event => {
+                        MailManager.mails.recovery(window.mails_selected, false);
+                        make_disabled(buttons);
+                        check_group_checkbox_status(block)
+                    })
+                }
+
+            }
         }
 
-        else if (window.mails_selected.length !== 0 && disable_buttons.length !== 0)
-            disable_buttons.forEach(el => el.className = 'mb_options_button');
-            let buttons = disable_buttons;
-
-            let unselect = block.querySelector('#cancel');
-            unselect.addEventListener('click', (event) => {
-                make_disabled(buttons)
-                ElementsManager.creater.clear_checkboxes(block);
-            })
-
-            let del = block.querySelector('#mass_delete');
-            if (del)
-                del.addEventListener('click', (event) => {
-                    MailManager.handler.delete(window.mails_selected, false);
-                    make_disabled(buttons);
-            })
-
-            let recovery = block.querySelector('#mass_recovery');
-            if (recovery)
-                recovery.addEventListener('click', event => {
-                    MailManager.handler.recovery(window.mails_selected, false);
-                    make_disabled(buttons);
-                })
-
         function make_disabled(buttons) {
+            //      Кнопки опций вкл
+
             buttons.forEach(el => {
                 el.className = 'mb_options_button_disabled';
                 el.removeEventListener('click', this.event);
             })
         }
+
+        function make_enabled(buttons) {
+        //      Кнопки опций выкл
+
+            buttons.forEach(el => el.className = 'mb_options_button');
+        }
     }
+
 }
 
 
-function show_mails_list(block) {
+function show_mails_block(block) {
     //      Показать блок писем
 
     clear_mails();
@@ -242,21 +327,25 @@ function show_mails_list(block) {
 function clear_mails() {
     //      Очистка окна MAILS
 
+    let block;
     let mails_list = MAILS.querySelector('.mails_block');
+
     if (mails_list) {
-        if (window.mails_selected !== []) {
+        if (window.mails_selected.length > 0) {
             window.mails_selected = [];
+
             switch (mails_list.id) {
                 case 'received':
-                    window.ElementsManager.creater.clear_checkboxes(window.mails_block); break;
-                case 'sent':
-                    window.ElementsManager.creater.clear_checkboxes(window.sent_mails_block); break;
+                    block = window.mails_block;
+                    clear_mails_block(block)
+                    break;
                 case 'deleted':
-                    window.ElementsManager.creater.clear_checkboxes(window.deleted_mails_block); break;
+                    block = window.deleted_mails_block;
+                    clear_mails_block(block)
+                    break;
             }
         }
         MAILS.removeChild(mails_list);
-        window.mails_selected = [];
     }
 
     else {
@@ -269,6 +358,13 @@ function clear_mails() {
             if (new_mail)
                 MAILS.removeChild(new_mail);
         }
+    }
+
+    function clear_mails_block(block) {
+        ElementsManager.creater.clear_checkboxes(block);
+        block.querySelectorAll('.mb_options_button').forEach(
+            el => el.className = 'mb_options_button_disabled')
+        block.querySelector('#group_checkbox').checked = false;
     }
 }
 
@@ -317,7 +413,7 @@ function delete_mails(mails_lst, back=true) {
 }
 
 
-function recovery_mails(mails_lst, back=false) {
+function recovery_mails(mails_lst, back=true) {
     //      Восстановить письма из удалённых
 
     let data = {'type':'recovery_mails', 'mails_list': mails_lst};
@@ -325,6 +421,16 @@ function recovery_mails(mails_lst, back=false) {
     if (back)
         go_back();
 }
+
+function read_mails(mails_lst, back=true) {
+    //      В прочитанные
+
+    let data = {'type':'read_mails', 'mails_list': mails_lst};
+    send_data(data);
+    if (back)
+        go_back();
+}
+
 
 function send_data(data) {
     window.ws_connection.send(JSON.stringify(data))

@@ -18,6 +18,7 @@ class Mail(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     answer_for = models.ForeignKey('Mail', on_delete=models.DO_NOTHING, null=True, blank=True)
     deleted = models.BooleanField(default=False)
+    read = models.BooleanField(default=False)
     deferred = models.BooleanField(default=False)
     deferred_datetime = models.DateTimeField(null=True, blank=True)
 

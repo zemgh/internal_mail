@@ -45,7 +45,7 @@ function create_mails_block() {
 function create_mails_line() {
     //      Письмо в списке
     let line = ElementsManager.creater.base_node('div', {className: 'mb_line'});
-    let inner_line = ElementsManager.creater.base_node('div', {className: 'mb_inner_line', id: 'inner_line'});
+    let inner_line = ElementsManager.creater.base_node('div', {id: 'inner_line'});
     let sender = ElementsManager.creater.base_node('div', {className: 'mb_line_sender', id: 'sender'});
     let subject = ElementsManager.creater.base_node('div', {className: 'mb_line_subject', id: 'subject'});
     let datetime = ElementsManager.creater.base_node('div', {className: 'mb_line_datetime', id: 'datetime'});
@@ -121,16 +121,17 @@ function create_mail_options_block(type) {
 
 function create_mails_list_options_block(type) {
     let options_block = ElementsManager.creater.base_node('div', {className: 'mb_options'});
-    let cancel = create_options_button('cancel', 'Снять выделение');
-    options_block.appendChild(cancel);
+    let checkbox = ElementsManager.creater.base_node('input', {type: 'checkbox', id: 'group_checkbox'});
+    options_block.appendChild(checkbox);
 
     if (type === 'received_list') {
-        let del = create_options_button('mass_delete', 'Удалить выбранные');
-        options_block.appendChild(del);
+        let del = create_options_button('mass_delete', 'Удалить');
+        let read = create_options_button('mass_read', 'Прочитано');
+        ElementsManager.creater.append(options_block, [del, read]);
     }
 
     else if (type === 'deleted_list') {
-        let recovery = create_options_button('mass_recovery', 'Восстановить выбранные');
+        let recovery = create_options_button('mass_recovery', 'Восстановить');
         recovery.disabled = true;
         options_block.appendChild(recovery);
     }

@@ -23,20 +23,21 @@ div.mails_filter{
 div.mb_options{
     display: flex;
     width: 100%;
-    gap: 10px;
+    gap: 5px;
     padding-bottom: 10px;
-    padding-left: 25px;
 }
 
 div.mb_options_button, div.mb_options_button_disabled{
     user-select: none;
-    background-color: forestgreen;
     padding: 5px;
     border-radius: 5px;
     border: 0;
     font-size: 14px;
 }
 
+div.mb_options_button{
+    background-color: forestgreen;
+}
 
 div.mb_options_button_disabled{
     background-color: gray;
@@ -63,10 +64,9 @@ div.mb_line{
     gap: 5px;
 }
 
-div.mb_inner_line{
+div.mb_inner_line, div.mb_inner_line_unread{
     display: flex;
     padding: 5px 10px 5px 10px;
-    background-color: gray;
     width: 100%;
     box-sizing: border-box;
     align-items: center;
@@ -74,24 +74,37 @@ div.mb_inner_line{
     border-radius: 5px;
 }
 
+div.mb_inner_line{
+    background-color: lightgrey;
+}
+
 div.mb_inner_line:hover{
     background-color: white;
 }
 
-input.mb_line_checkbox{
+div.mb_inner_line_unread{
+    background-color: lightgreen;
+}
+
+div.mb_inner_line_unread:hover{
+    background-color: white;
 }
 
 div.mb_line_sender{
     width: 30%;
+    border-right: 1px solid black;
 }
 
 div.mb_line_subject{
     width: 60%;
+    margin-left: 5px;
+    border-right: 1px solid black;
 }
 
 div.mb_line_datetime{
     width: 10%;
     text-align: right;
+    margin-left: 5px;
 }
 
 

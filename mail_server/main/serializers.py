@@ -19,7 +19,8 @@ class MailSerializer:
             'receivers': cls.get_receivers(mail.receivers.all()),
             'subject': mail.subject,
             'message': mail.message,
-            'created': mail.get_datetime
+            'created': mail.get_datetime,
+            'read': mail.read
         }
         return m_data
 

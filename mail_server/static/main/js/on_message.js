@@ -1,4 +1,4 @@
-window.MessagesManager = {
+window.MessagesHandler = {
     get: get_mails,
 }
 
@@ -6,13 +6,13 @@ window.MessagesManager = {
 ws_connection.onmessage = (event) => {
     let message = JSON.parse(event.data);
     switch (message.type) {
-        case 'get_mails': MessagesManager.get(message); break;
+        case 'get_mails': MessagesHandler.get(message); break;
         }
 }
 
 
 function get_mails(message) {
-    MailManager.handler.update(message.received, message.sent, message.deleted);
+    MailManager.mails.update(message.received, message.sent, message.deleted);
     if (window.current_page === 'received')
         MailManager.received();
     else if (window.current_page === 'sent')
