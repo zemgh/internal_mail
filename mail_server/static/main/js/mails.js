@@ -10,7 +10,7 @@ window.MailManager = {
 window.MailManager.mails = {
     send: send_mail,
     delete: delete_mails,
-    update: update_mails_and_mails_list,
+    // update: update_mails_and_mails_list,
     recovery: recovery_mails,
     read: read_mails
 }
@@ -48,56 +48,7 @@ function get_deleted_mails() {
 }
 
 
-function show_mail(mail) {
-    //      Показать письмо
 
-    if (!mail.read)
-        MailManager.mails.read([mail.id], false)
-
-    let type;
-    window.current_mail = mail;
-    if (window.current_page !== 'mail') {
-        type = window.current_page;
-        window.previous_page = window.current_page;
-        window.current_page = 'mail';
-    } else type = window.previous_page
-
-    clear_mails();
-
-    let mail_block = ElementsManager.samples.mail_view.cloneNode(true);
-    let options_block = ElementsManager.options_blocks[type].cloneNode(true);
-    mail_block.prepend(options_block);
-
-    mail_block.querySelector('.m_info').innerHTML =
-        `Тема: ${mail.subject}<p>Отправитель: ${mail.sender}</p>${mail.created.long}`;
-    mail_block.querySelector('.m_message').innerText = mail.message;
-
-    let back = options_block.querySelector('#back');
-    back.addEventListener('click', (event) =>
-        go_back())
-
-    if (type === 'received') {
-        let reply = options_block.querySelector('#reply');
-        reply.addEventListener('click', (event) =>
-            MailManager.create(true, mail));
-
-        let del = options_block.querySelector('#del');
-        del.addEventListener('click', (event) =>
-            MailManager.mails.delete([mail.id]))
-    }
-
-    if (type === 'deleted') {
-        let reply = options_block.querySelector('#reply');
-        reply.addEventListener('click', (event) =>
-            MailManager.create(true, mail));
-
-        let recovery = options_block.querySelector('#recovery');
-        recovery.addEventListener('click', (event) =>
-            MailManager.mails.recovery([mail.id]));
-    }
-
-    MAILS.appendChild(mail_block)
-}
 
 
 function create_mail(reply=false, mail=undefined, back_type) {

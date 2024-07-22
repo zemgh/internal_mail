@@ -7,6 +7,13 @@ div.mails{
 }
 
 
+div.mails_block{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
 
 /*    Письма-Фильтр    */
 
@@ -51,7 +58,7 @@ div.mb_options_button:hover{
 
 /*    Письма-список    */
 
-div.mails_block{
+div.mails_list{
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -112,7 +119,7 @@ div.mb_line_datetime{
 /*    Письмо   */
 
 div.mail{
-    display: flex;
+    display: None;
     flex-direction: column;
     width: 100%;
     gap: 10px;
@@ -153,7 +160,7 @@ div.m_message{
 /*    Новое письмо   */
 
 form.nm_form{
-    display: flex;
+    display: None;
     flex-direction: column;
     gap: 10px;
     box-sizing: border-box;

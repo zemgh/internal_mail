@@ -24,7 +24,7 @@ class TestConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
-        print(data)
+        print('income:', data)
         request_type = data.get('type')
         if request_type == 'get_mails':
             self.send_mails()
@@ -58,6 +58,7 @@ class TestConsumer(WebsocketConsumer):
             'deleted': deleted_mails_data}
 
         self.send(json.dumps(data))
+        print('send:', data)
 
 
     def create_mail(self, new_mail):

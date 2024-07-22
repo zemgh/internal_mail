@@ -17,8 +17,8 @@
 
 {% block scripts %}
 
+    <script src="{% static "main/js/connection_manager.js"%}"></script>
     <script src="{% static "main/js/init.js"%}"></script>
     <script>init('{{ ws_url }}')</script>
-    <script src="{% static "main/js/on_message.js"%}"></script>
 
 {% endblock %}
