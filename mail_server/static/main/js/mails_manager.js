@@ -1,11 +1,15 @@
-function MailsManagerClass() {
-    this.MAILS = document.querySelector('.mails');
-    this.ReceivedBlock = new MailsBlockClass('received');
-    this.SentBlock = new MailsBlockClass('sent');
-    this.DeletedBlock = new MailsBlockClass('deleted');
-    this.current_block = this.ReceivedBlock;
+class MailsManager {
+    #MAILS = document.querySelector('.mails');
 
-    this.update_blocks = function (message) {
+
+    constructor() {
+        this.ReceivedBlock = new MailsBlock('received');
+        this.SentBlock = new MailsBlock('sent');
+        this.DeletedBlock = new MailsBlock('deleted');
+        this.current_block = this.ReceivedBlock;
+    }
+
+    update_blocks(message) {
         this.ReceivedBlock.update(message.received);
         this.SentBlock.update(message.sent);
         this.DeletedBlock.update(message.deleted);
@@ -13,85 +17,83 @@ function MailsManagerClass() {
     }
 
 
-    this.show_received = function () {
+    show_received() {
         this.current_block = this.ReceivedBlock;
-        this.show_mails_block(this.ReceivedBlock)
+        this.show_mails_block(this.ReceivedBlock);
     }
 
 
-    this.show_sent = function () {
+    show_sent() {
         this.current_block = this.SentBlock;
-        this.show_mails_block(this.SentBlock)
+        this.show_mails_block(this.SentBlock);
     }
 
 
-    this.show_deleted = function () {
+    show_deleted() {
         this.current_block = this.DeletedBlock;
-        this.show_mails_block(this.DeletedBlock)
+        this.show_mails_block(this.DeletedBlock);
     }
 
 
-    this.update_current_page = function () {
+    update_current_page() {
         if (this.current_block.refresh === true)
             this.show_mails_block(this.current_block);
     }
 
 
-    this.clear = function () {
-        this.MAILS.innerHTML = "";
+    show_mails_block(obj) {
+        this.#clear();
+        obj.show_mails();
     }
 
 
-    this.show_mails_block = function (obj) {
-        this.clear();
-        this.current_block.reset();
-        obj.get_mails();
-    }
-
-
-    this.send_new_mail = function(receivers, subject, message) {
+    send(receivers, subject, message) {
         let data = {
             'type': 'create_mail',
             'receivers': receivers,
             'subject': subject,
             'message': message
         }
-        ConnectionManager.send(data);
+        CONNECTION.send(data);
     }
 
 
-    this.delete_mails = function(array) {
+    delete(id_list) {
         let data = {
             'type': 'delete_mails',
-            'mails_list': array
+            'mails_list': id_list
         }
-        ConnectionManager.send(data);
+        CONNECTION.send(data);
     }
 
 
-    this.recovery_mails = function(array) {
+    recovery(id_list) {
         let data = {
             'type': 'recovery_mails',
-            'mails_list': array
+            'mails_list': id_list
         }
-        ConnectionManager.send(data);
+        CONNECTION.send(data);
     }
 
-    this.read_mails = function(array) {
+    read(id_list) {
         let data = {
             'type': 'read_mails',
-            'mails_list': array
+            'mails_list': id_list
         }
-        ConnectionManager.send(data);
+        CONNECTION.send(data);
     }
 
 
-    this.get_test_mail = function() {
+    get_test_mail(){
         let data = {
             'type': 'create_test_mail',
         }
-        ConnectionManager.send(data);
+        CONNECTION.send(data);
     }
 
+
+    #clear() {
+        this.#MAILS.innerHTML = "";
+    }
 
 }

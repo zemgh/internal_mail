@@ -105,13 +105,11 @@ div.mb_line_sender{
 div.mb_line_subject{
     width: 60%;
     margin-left: 5px;
-    border-right: 1px solid black;
 }
 
 div.mb_line_datetime{
     width: 10%;
     text-align: right;
-    margin-left: 5px;
 }
 
 

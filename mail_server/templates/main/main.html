@@ -3,6 +3,7 @@
 {% block content %}
 
     {% load static %}
+    <script src="{% static "main/js/connection_manager.js"%}"></script>
     <script src="{% static "main/js/elements.js"%}"></script>
     <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
 
@@ -12,13 +13,13 @@
         {% include 'main/contacts.html' %}
     </div>
 
+    <script src="{% static "main/js/init.js"%}"></script>
+
 {% endblock %}
 
 
 {% block scripts %}
 
-    <script src="{% static "main/js/connection_manager.js"%}"></script>
-    <script src="{% static "main/js/init.js"%}"></script>
     <script>init('{{ ws_url }}')</script>
 
 {% endblock %}
