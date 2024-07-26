@@ -27,14 +27,14 @@ div.mails_filter{
 
 /*    Письма-Опции    */
 
-div.mb_options{
+div.list_options{
     display: flex;
     width: 100%;
     gap: 5px;
     padding-bottom: 10px;
 }
 
-div.mb_options_button, div.mb_options_button_disabled{
+div.list_options_button, div.list_options_button_disabled{
     user-select: none;
     padding: 5px;
     border-radius: 5px;
@@ -42,15 +42,15 @@ div.mb_options_button, div.mb_options_button_disabled{
     font-size: 14px;
 }
 
-div.mb_options_button{
+div.list_options_button{
     background-color: forestgreen;
 }
 
-div.mb_options_button_disabled{
+div.list_options_button_disabled{
     background-color: gray;
 }
 
-div.mb_options_button:hover{
+div.list_options_button:hover{
     background-color: white;
 }
 
@@ -58,20 +58,29 @@ div.mb_options_button:hover{
 
 /*    Письма-список    */
 
-div.mails_list{
+div.mails_list_base_block{
     display: flex;
     flex-direction: column;
     width: 100%;
     gap: 5px;
 }
 
-div.mb_line{
+div.mails_list_block{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+}
+
+div.list_line{
     display: flex;
     width: 100%;
     gap: 5px;
 }
 
-div.mb_inner_line, div.mb_inner_line_unread{
+input.list_line_checkbox{}
+
+div.list_inner_line, div.list_inner_line_unread{
     display: flex;
     padding: 5px 10px 5px 10px;
     width: 100%;
@@ -81,33 +90,33 @@ div.mb_inner_line, div.mb_inner_line_unread{
     border-radius: 5px;
 }
 
-div.mb_inner_line{
+div.list_inner_line{
     background-color: lightgrey;
 }
 
-div.mb_inner_line:hover{
+div.list_inner_line:hover{
     background-color: white;
 }
 
-div.mb_inner_line_unread{
+div.list_inner_line_unread{
     background-color: lightgreen;
 }
 
-div.mb_inner_line_unread:hover{
+div.list_inner_line_unread:hover{
     background-color: white;
 }
 
-div.mb_line_sender{
+div.list_line_sender{
     width: 30%;
     border-right: 1px solid black;
 }
 
-div.mb_line_subject{
+div.list_line_subject{
     width: 60%;
     margin-left: 5px;
 }
 
-div.mb_line_datetime{
+div.list_line_datetime{
     width: 10%;
     text-align: right;
 }
@@ -124,13 +133,13 @@ div.mail{
     box-sizing: border-box;
 }
 
-div.m_options{
+div.view_options{
     display: flex;
     width: 100%;
     gap: 10px;
 }
 
-div.m_options_button{
+div.view_options_button{
     user-select: none;
     background-color: forestgreen;
     padding: 10px;
@@ -138,17 +147,17 @@ div.m_options_button{
     border: 0;
 }
 
-div.m_options_button:hover{
+div.view_options_button:hover{
     background-color: white;
 }
 
-div.m_info{
+div.view_info{
     background-color: cornflowerblue;
     padding: 10px;
     border-radius: 5px;
 }
 
-div.m_message{
+div.view_message{
     width: 100%;
     padding: 10px;
 }
@@ -157,7 +166,7 @@ div.m_message{
 
 /*    Новое письмо   */
 
-form.nm_form{
+form.create_form{
     display: None;
     flex-direction: column;
     gap: 10px;
@@ -165,15 +174,15 @@ form.nm_form{
     height: 100%;
 }
 
-div.nm_line{
+div.create_line{
     display: flex;
     gap: 10px;
 }
-div.nm_label{
+div.create_label{
     width: 8%;
 }
 
-input.nm_receivers_subject{
+input.create_receivers_subject{
     background-color: wheat;
     box-sizing: border-box;
     border: 0;
@@ -181,7 +190,7 @@ input.nm_receivers_subject{
     border-radius: 5px;
 }
 
-textarea.nm_message{
+textarea.create_message{
     background-color: wheat;
     box-sizing: border-box;
     border: 0;

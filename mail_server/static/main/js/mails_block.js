@@ -30,12 +30,12 @@ class MailsBlock{
 
 
     read_mail(mail) {
-        if (mail.read === false) {
-            this.read_mails([mail]);
-        }
-
         this.#mails_list.hide();
         this.#mail_reader.show(mail);
+
+        if (mail.read === false) {
+            this.read_mails([mail.id]);
+        }
     }
 
 
@@ -57,12 +57,7 @@ class MailsBlock{
     }
 
 
-    read_mails(mails) {
-        let id_list = [];
-        for (let mail of mails)
-            if (mail.read !== true)
-                id_list.push(mail.id);
-
+    read_mails(id_list) {
         this.#read_lines(id_list);
         MAILS_MANAGER.read(id_list);
     }
@@ -117,35 +112,44 @@ class MailsList {
     MAIL_LINE = MailLine;
     list = [];
     selected = [];
+    checkboxes = [];
+    buttons_enabled = false;
 
     block = ElementsManager.samples.mails_list.cloneNode(true);
+    list_block = this.block.firstChild;
+
 
     constructor(parent) {
         this.parent = parent;
+        if (this.parent.type !== 'sent') {
+            this.options_block = ElementsManager.create_mails_list_options_block(parent.type);
+            this.block.prepend(this.options_block);
+            this.group_checkbox = this.block.querySelector('#group_checkbox');
+        }
     }
 
 
     update_list(list) {
         if (this.list !== list) {
             this.list = list;
-            this.block.innerHTML = '';
+            this.list_block.innerHTML = '';
             this.#mails_list_to_block();
         }
     }
 
 
     make_read(id_list) {
-        let lines = this.block.querySelectorAll('.mb_line');
+        let lines = this.block.querySelectorAll('.list_line');
         lines.forEach(el => {
             if (el.id in id_list) {
-                el.querySelector('#inner_line').className = 'mb_inner_line';
+                el.querySelector('#inner_line').className = 'list_inner_line';
             }
         })
     }
 
 
     make_deleted(id_list) {
-        let lines = this.block.querySelectorAll('.mb_line');
+        let lines = this.block.querySelectorAll('.list_line');
         lines.forEach(el => {
             if (el.id in id_list)
                 el.remove();
@@ -166,8 +170,9 @@ class MailsList {
 
 
     #mails_list_to_block() {
+
         for (let mail of this.list) {
-            let line = new this.MAIL_LINE(mail, this);
+            let line = new this.MAIL_LINE(mail, this.parent.type);
 
             if (line.checkbox) {
                 line.checkbox.addEventListener('change', (event) => {
@@ -177,12 +182,111 @@ class MailsList {
                         let index = this.selected.indexOf(line.checkbox.id);
                         this.selected.splice(index, 1);
                     }
+                    this.#check_buttons_status();
                 })
+                this.checkboxes.push(line.checkbox);
             }
 
             line.inner_line.addEventListener('click', (event) => this.parent.read_mail(mail));
-            this.block.appendChild(line.block);
+            this.list_block.appendChild(line.block);
         }
+
+        if (this.group_checkbox) {
+            this.#add_group_checkbox_event();
+        }
+    }
+
+    #add_group_checkbox_event() {
+        this.group_checkbox.addEventListener('change', () => {
+            if (this.group_checkbox.checked === true) {
+                this.checkboxes.forEach(el => {
+                    if (el.checked === false)
+                        el.checked = true;
+                })
+                this.#select_all();
+            }
+            else {
+                this.checkboxes.forEach(el => {
+                    if (el.checked === true)
+                    el.checked = false;
+                });
+                this.selected = [];
+            }
+
+            this.#check_buttons_status();
+        })
+    }
+
+
+    #select_all() {
+        this.selected = [];
+        this.checkboxes.forEach(el => {
+            this.selected.push(el.id)
+        })
+    }
+
+
+    #check_buttons_status() {
+        if (this.selected.length > 0 && !this.buttons_enabled)
+            this.#make_buttons_enabled();
+        else if (this.selected.length === 0 && this.buttons_enabled)
+            this.#make_buttons_disabled();
+    }
+
+
+    #make_buttons_enabled() {
+        //      Кнопки опций вкл
+
+        this.buttons_enabled = true;
+
+        if (this.parent.type === 'received') {
+
+            let del = this.options_block.querySelector('#mass_delete');
+            del.className = 'list_options_button'
+            del.addEventListener('click', (event) => {
+                this.parent.delete_mails(this.selected);
+                clear(this);
+            })
+
+            let read = this.options_block.querySelector('#mass_read');
+            read.className = 'list_options_button';
+            read.addEventListener('click', (event) => {
+                this.parent.read_mails(this.selected);
+                clear(this);
+            })
+        }
+        else if (this.parent.type === 'deleted') {
+
+            let recovery = this.options_block.querySelector('#mass_recovery');
+            recovery.className = 'list_options_button'
+            recovery.addEventListener('click', event => {
+                this.parent.recovery_mails(this.selected);
+                clear(this);
+            })
+        }
+
+        function clear(self) {
+            self.selected = [];
+            self.#check_buttons_status();
+        }
+    }
+
+
+
+    #make_buttons_disabled() {
+        //      Кнопки опций выкл
+
+        this.buttons_enabled = false;
+        let buttons;
+        if (this.parent.type === 'received')
+            buttons = this.options_block.querySelectorAll('#mass_delete, #mass_read');
+        else if (this.parent.type === 'deleted')
+            buttons = this.options_block.querySelectorAll('#mass_recovery');
+
+        buttons.forEach(el => {
+            el.className = 'list_options_button_disabled';
+            el.replaceWith(el.cloneNode(true));
+        })
     }
 }
 
@@ -194,8 +298,8 @@ class MailViewer {
     constructor(parent) {
         this.parent = parent;
         this.block = ElementsManager.create_mail_view(this.parent.type);
-        this.info = this.block.querySelector('.m_info');
-        this.message = this.block.querySelector('.m_message');
+        this.info = this.block.querySelector('.view_info');
+        this.message = this.block.querySelector('.view_message');
 
         this.#add_buttons_events(this.parent.type);
     }
@@ -319,28 +423,30 @@ class MailCreater {
 
 
 class MailLine {
-    block = ElementsManager.samples.mails_line.cloneNode(true);
-    inner_line = this.block.querySelector('#inner_line');
-    sender = this.block.querySelector('#sender');
-    subject = this.block.querySelector('#subject');
-    datetime = this.block.querySelector('#datetime');
-
-
-    constructor(mail, parent) {
+    constructor(mail, type) {
         this.mail = mail;
-        this.parent = parent
-        this.block.id = mail.id;
+        this.type = type;
 
-        if (this.parent.type === 'received' || this.parent.type === 'deleted') {
-            this.checkbox = ElementsManager.samples.line_checkbox.cloneNode(true);
-            this.block.insertBefore(this.checkbox, this.block.firstChild);
+        if (this.type === 'sent')
+            this.block = ElementsManager.samples.mails_line.cloneNode(true);
+        else {
+            this.block = ElementsManager.samples.mails_line_with_checkbox.cloneNode(true);
+            this.checkbox = this.block.querySelector('.list_line_checkbox');
+            this.checkbox.id = mail.id;
         }
 
-        if (parent.type === 'sent' || mail.read === true)
-            this.inner_line.className = 'mb_inner_line';
-            else this.inner_line.className = 'mb_inner_line_unread';
+        this.inner_line = this.block.querySelector('#inner_line');
+        this.sender = this.block.querySelector('#sender');
+        this.subject = this.block.querySelector('#subject');
+        this.datetime = this.block.querySelector('#datetime');
+        this.block.id = mail.id;
 
-        if (this.parent.type === 'sent')
+        if (this.type === 'sent' || mail.read === true)
+            this.inner_line.className = 'list_inner_line';
+        else
+            this.inner_line.className = 'list_inner_line_unread';
+
+        if (this.type === 'sent')
             this.sender.innerText = this.mail.receivers;
         else
             this.sender.innerText = this.mail.sender;
