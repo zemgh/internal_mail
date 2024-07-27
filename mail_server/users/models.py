@@ -71,7 +71,7 @@ class User(AbstractBaseUser):
         (1, 'online')
     )
     status = models.BooleanField(choices=STATUS_CHOICES, default=0)
-    unread_counter = models.IntegerField(default=0)
+    channel = models.CharField(max_length=100, null=True, blank=True)
 
     objects = CustomUserManager()
 
@@ -83,6 +83,10 @@ class User(AbstractBaseUser):
 
     def get_full_name(self):
         return f'{self.last_name} {self.first_name}'
+
+    def add_channel(self, channel_name):
+        self.channel = channel_name
+        return self.save()
 
     @staticmethod
     def __hash_secret_word(secret_word: str) -> str:

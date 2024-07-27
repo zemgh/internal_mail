@@ -11,9 +11,13 @@ class ConnectionManager {
             let message = JSON.parse(event.data);
             console.log('incoming message:', message);
             switch (message.type) {
-            case 'get_mails':
-                    MAILS_MANAGER.update_blocks(message);
-                    break;
+                case 'get_mails':
+                        if (message.close_create_form)
+                            MAILS_MANAGER.current_block.close_create_mail_form();
+                        MAILS_MANAGER.update_blocks(message);
+                        break;
+                case 'error':
+                        MAILS_MANAGER.raise_alert_error(message['error'])
             }
         }
     }

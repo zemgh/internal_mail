@@ -83,7 +83,7 @@ function ElementsManagerClass () {
             ElementsManager.combine(options_block, [reply, recovery]);
         }
 
-        else if (type === 'new') {
+        else if (type === 'drafts') {
             let sent = this.create_options_button_for_mail('send', 'Отравить');
             this.combine(options_block, [sent]);
         }
@@ -92,36 +92,46 @@ function ElementsManagerClass () {
     }
 
 
-    this.create_new_mail_form = function() {
+    this.create_new_mail_form = function(type) {
         //      Создание письма
 
         let main_block = this.create_base_node('form', {className: 'create_form'});
-        let options_block = this.create_new_mail_options_block();
+        let options_block = this.create_new_mail_options_block(type);
         let receivers = this.create_input_with_label('receivers', 'Кому:');
         let subject = this.create_input_with_label('subject', 'Тема:');
         let message = this.create_base_node('textarea', {className: 'create_message', id: 'message'});
 
         return this.combine(main_block, [options_block, receivers, subject, message]);
     }
+
+
     this.create_input_with_label = function(id, text) {
         let line = this.create_base_node('div',{className: 'create_line'});
         let input = this.create_base_node('input', {type: 'text', className: 'create_receivers_subject', id: id});
         let label = this.create_base_node('div', {className: 'create_label', innerText: text});
 
         return this.combine(line, [label, input]);
-        }
+    }
 
 
-    this.create_new_mail_options_block = function() {
+    this.create_new_mail_options_block = function(type) {
         //      Опции для создания письма
 
         let options_block = this.create_base_node('div', {className: 'view_options'});
 
         let back = this.create_options_button_for_mail('back', 'Назад');
         let send = this.create_options_button_for_mail('send', 'Отправить');
-        let draft = this.create_options_button_for_mail('draft', 'В черновик');
 
-        return this.combine(options_block, [back, send, draft]);
+        let draft, del;
+        if (type === 'drafts') {
+            draft = this.create_options_button_for_mail('save', 'Сохранить');
+            del = this.create_options_button_for_mail('del', 'Удалить');
+            return this.combine(options_block, [back, send, draft, del]);
+        }
+        else {
+            draft = this.create_options_button_for_mail('draft', 'В черновик');
+            return this.combine(options_block, [back, send, draft]);
+        }
     }
 
 
@@ -150,6 +160,11 @@ function ElementsManagerClass () {
             let recovery = this.create_options_button_for_list ('mass_recovery', 'Восстановить');
             recovery.disabled = true;
             options_block.appendChild(recovery);
+        }
+
+        else if (type === 'drafts') {
+            let del = this.create_options_button_for_list ('mass_delete', 'Удалить');
+            this.combine(options_block, [del]);
         }
 
         return options_block;

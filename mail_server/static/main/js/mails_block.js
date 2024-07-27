@@ -24,7 +24,9 @@ class MailsBlock{
     }
 
 
-    update(mails_list) {
+    update(mails_list, unread=null) {
+        if (this.type === 'received')
+            this.#update_counter(unread);
         this.#mails_list.update_list(mails_list);
     }
 
@@ -45,15 +47,30 @@ class MailsBlock{
     }
 
 
-    create_mail(reply_mail=null) {
+    create_mail(reply_mail=null, draft=false) {
         this.#mails_list.hide();
         this.#mail_reader.hide()
-        this.#mail_creator.show(reply_mail);
+        this.#mail_creator.show(reply_mail, draft);
     }
 
 
     send_mail(receivers, subject, message) {
-        MAILS_MANAGER.send(receivers, subject, message);
+        MAILS_MANAGER.send_mail(receivers, subject, message);
+    }
+
+
+    send_draft(receivers, subject, message) {
+        MAILS_MANAGER.send_draft(receivers, subject, message);
+    }
+
+
+    save_draft(id, receivers, subject, message) {
+        MAILS_MANAGER.save_draft(id, receivers, subject, message);
+    }
+
+
+    convert_to_mail(id, receivers, subject, message) {
+        MAILS_MANAGER.convert_to_mail(id, receivers, subject, message);
     }
 
 
@@ -69,19 +86,39 @@ class MailsBlock{
     }
 
 
+    delete_drafts(id_list) {
+        this.#mails_list.make_deleted(id_list);
+        MAILS_MANAGER.delete_drafts(id_list);
+    }
+
+
     recovery_mails(id_list) {
         this.#delete_lines(id_list);
         MAILS_MANAGER.recovery(id_list);
     }
 
 
-    close_create_mail_form(reply_mail) {
+    close_create_mail_form(reply_mail=null) {
         this.#mail_creator.hide();
         if (reply_mail) {
             this.#mail_reader.show(reply_mail);
         }
         else
             this.#mails_list.show();
+    }
+
+
+    clear_selected() {
+        this.#mails_list.clear_selected();
+    }
+
+
+    #update_counter(count) {
+        let field = document.querySelector('#received_mails').querySelector('.menu_line_counter')
+        if (count)
+            field.innerText = count;
+        else
+            field.innerText = '';
     }
 
 
@@ -166,10 +203,22 @@ class MailsList {
     hide() {
         this.block.style.display = 'None';
         this.parent.refresh = false;
+        this.clear_selected()
+    }
+
+
+    clear_selected() {
+        this.selected = [];
+        if (this.group_checkbox)
+            this.group_checkbox.checked = false;
+        this.checkboxes.forEach(el => el.checked = false);
     }
 
 
     #mails_list_to_block() {
+        if (this.parent.type !== 'sent') {
+            this.checkboxes = [];
+        }
 
         for (let mail of this.list) {
             let line = new this.MAIL_LINE(mail, this.parent.type);
@@ -184,10 +233,22 @@ class MailsList {
                     }
                     this.#check_buttons_status();
                 })
+
+                if (this.selected.includes(line.checkbox.id))
+                    line.checkbox.checked = true;
+
                 this.checkboxes.push(line.checkbox);
             }
 
-            line.inner_line.addEventListener('click', (event) => this.parent.read_mail(mail));
+            line.inner_line.addEventListener('click', (event) => {
+                if (this.parent.type === 'drafts')
+                    this.parent.create_mail(mail, true);
+                else
+                    this.parent.read_mail(mail);
+                if (this.group_checkbox && this.group_checkbox.checked)
+                    this.clear_selected();
+            })
+
             this.list_block.appendChild(line.block);
         }
 
@@ -210,7 +271,7 @@ class MailsList {
                     if (el.checked === true)
                     el.checked = false;
                 });
-                this.selected = [];
+                this.clear_selected();
             }
 
             this.#check_buttons_status();
@@ -255,6 +316,7 @@ class MailsList {
                 clear(this);
             })
         }
+
         else if (this.parent.type === 'deleted') {
 
             let recovery = this.options_block.querySelector('#mass_recovery');
@@ -265,9 +327,19 @@ class MailsList {
             })
         }
 
-        function clear(self) {
-            self.selected = [];
-            self.#check_buttons_status();
+        else if (this.parent.type === 'drafts') {
+            let del = this.options_block.querySelector('#mass_delete');
+            del.className = 'list_options_button'
+            del.addEventListener('click', (event) => {
+                this.parent.delete_drafts(this.selected);
+                clear(this);
+            })
+        }
+
+
+        function clear(obj) {
+            obj.clear_selected();
+            obj.#check_buttons_status();
         }
     }
 
@@ -282,6 +354,8 @@ class MailsList {
             buttons = this.options_block.querySelectorAll('#mass_delete, #mass_read');
         else if (this.parent.type === 'deleted')
             buttons = this.options_block.querySelectorAll('#mass_recovery');
+        else if (this.parent.type === 'drafts')
+            buttons = this.options_block.querySelectorAll('#mass_delete');
 
         buttons.forEach(el => {
             el.className = 'list_options_button_disabled';
@@ -355,14 +429,13 @@ class MailViewer {
 
 
 class MailCreater {
-    block = ElementsManager.create_new_mail_form()
-    receivers = this.block.querySelector('#receivers');
-    subject = this.block.querySelector('#subject');
-    message = this.block.querySelector('#message');
-
-
+    result;
     constructor(parent) {
         this.parent = parent;
+        this.block = ElementsManager.create_new_mail_form(this.parent.type)
+        this.receivers = this.block.querySelector('#receivers');
+        this.subject = this.block.querySelector('#subject');
+        this.message = this.block.querySelector('#message');
         this.#add_buttons_events();
     }
 
@@ -382,17 +455,27 @@ class MailCreater {
 
 
     #add_reply_attrs() {
-        this.receivers.value = this.reply_mail.sender;
-        this.subject.value =
-            this.reply_mail.subject.slice(0, 4) === 'Re: '
-                                            ?
-                this.reply_mail.subject     :    `Re: ${this.reply_mail.subject}`;
-        this.message.value =
-            '\n\n' +
-            '*'.repeat(20) +
-            `\n\n${this.reply_mail.created.long}` +
-            `\nОт ${this.reply_mail.sender}` +
-            `\n\n${this.reply_mail.message}`
+        if (this.parent.type === 'drafts') {
+            this.receivers.value = this.reply_mail.receivers;
+            this.message.value = this.reply_mail.message;
+            this.subject.value = this.reply_mail.subject;
+        }
+
+        else {
+            this.receivers.value = this.reply_mail.sender;
+
+            if (this.reply_mail.subject.slice(0, 4) === 'Re: ')
+                this.subject.value = this.subject.value = this.reply_mail.subject;
+            else
+                this.subject.value = `Re: ${this.reply_mail.subject}`;
+
+            this.message.value =
+                '\n\n' +
+                '*'.repeat(20) +
+                `\n\n${this.reply_mail.created.long}` +
+                `\nОт ${this.reply_mail.sender}` +
+                `\n\n${this.reply_mail.message}`;
+        }
     }
 
 
@@ -411,13 +494,53 @@ class MailCreater {
 
     #add_buttons_events() {
         let back = this.block.querySelector('#back');
-        back.addEventListener('click', () => this.parent.close_create_mail_form(this.reply_mail));
-
         let send = this.block.querySelector('#send');
-        send.addEventListener('click', () => {
-            this.parent.send_mail([this.receivers.value], this.subject.value, this.message.value);
-            back.click();
-        })
+
+        if (this.parent.type === 'drafts') {
+            back.addEventListener('click', () => this.parent.close_create_mail_form());
+
+            send.addEventListener('click', () =>
+                this.#check_data_and_send(
+                    [this.receivers.value], this.subject.value, this.message.value, true, this.reply_mail.id));
+
+            let save = this.block.querySelector('#save');
+            save.addEventListener('click', () => {
+                this.parent.save_draft(
+                    this.reply_mail.id, [this.receivers.value], this.subject.value, this.message.value);
+                back.click();
+            })
+
+            let del = this.block.querySelector('#del');
+            del.addEventListener('click', () => {
+                this.parent.delete_drafts([this.reply_mail.id]);
+                back.click();
+            })
+        }
+
+        else {
+            back.addEventListener('click', () => this.parent.close_create_mail_form(this.reply_mail));
+
+            send.addEventListener('click', () =>
+                this.#check_data_and_send([this.receivers.value], this.subject.value, this.message.value));
+
+            let draft = this.block.querySelector('#draft');
+            draft.addEventListener('click', () => {
+                this.parent.send_draft([this.receivers.value], this.subject.value, this.message.value);
+                console.log([this.receivers.value], this.subject.value, this.message.value);
+                back.click();
+            })
+        }
+    }
+
+    #check_data_and_send(receivers, subject, message, convert_to_mail=false, id=null) {
+        if (!receivers || !subject || !message)
+            alert('Все поля должны быть заполнены!');
+        else {
+            if (convert_to_mail)
+                this.parent.convert_to_mail(id, receivers, subject, message);
+            else
+                this.parent.send_mail(receivers, subject, message);
+        }
     }
 }
 
@@ -441,12 +564,12 @@ class MailLine {
         this.datetime = this.block.querySelector('#datetime');
         this.block.id = mail.id;
 
-        if (this.type === 'sent' || mail.read === true)
+        if (this.type === 'sent' || this.type === 'drafts' || mail.read === true)
             this.inner_line.className = 'list_inner_line';
         else
             this.inner_line.className = 'list_inner_line_unread';
 
-        if (this.type === 'sent')
+        if (this.type === 'sent' || this.type === 'drafts')
             this.sender.innerText = this.mail.receivers;
         else
             this.sender.innerText = this.mail.sender;
