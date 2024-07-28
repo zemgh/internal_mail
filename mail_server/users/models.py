@@ -88,6 +88,10 @@ class User(AbstractBaseUser):
         self.channel = channel_name
         return self.save()
 
+    def remove_channel(self):
+        self.channel = None
+        return self.save()
+
     @staticmethod
     def __hash_secret_word(secret_word: str) -> str:
         data = secret_word.encode()

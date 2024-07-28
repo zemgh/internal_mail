@@ -176,12 +176,17 @@ function ElementsManagerClass () {
         return this.create_base_node('div', {className: 'list_options_button_disabled', id: id, innerText: text});
     }
 
+    this.create_more_button = function() {
+        return this.create_base_node('button', {className: 'list_more_button', id: 'more', innerText: 'Ещё письма'})
+    }
+
 
     this.samples = {
         mails_block: this.create_mails_block(),
         mails_list: this.create_mails_list(),
         mails_line: this.create_mails_line(),
-        mails_line_with_checkbox: this.create_mails_line(true)
+        mails_line_with_checkbox: this.create_mails_line(true),
+        more_button: this.create_more_button()
     }
 }
 

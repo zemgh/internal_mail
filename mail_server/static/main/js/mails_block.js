@@ -3,7 +3,7 @@ class MailsBlock{
     #mail_reader;
     #mails_list;
 
-    refresh = true;
+    mails_per_page_multiplier = 1;
 
     #MAILS = document.querySelector('.mails');
     #block = ElementsManager.samples.mails_block.cloneNode(true);
@@ -19,7 +19,6 @@ class MailsBlock{
 
 
     show_mails() {
-        this.#reset();
         this.#MAILS.appendChild(this.#block);
     }
 
@@ -28,6 +27,12 @@ class MailsBlock{
         if (this.type === 'received')
             this.#update_counter(unread);
         this.#mails_list.update_list(mails_list);
+    }
+
+
+    get_more_mails() {
+        this.mails_per_page_multiplier++
+        MAILS_MANAGER.get_mails(this.type, this.number_of_mails);
     }
 
 
@@ -113,6 +118,21 @@ class MailsBlock{
     }
 
 
+    reset() {
+        // this.clear_selected();
+        this.#mails_list.show();
+        this.#mail_reader.hide();
+        this.#mail_creator.hide();
+        this.mails_per_page_multiplier = 1;
+        this.#mails_list.reset();
+    }
+
+
+    get number_of_mails() {
+        return window.MAILS_PER_PAGE * this.mails_per_page_multiplier
+    }
+
+
     #update_counter(count) {
         let field = document.querySelector('#received_mails').querySelector('.menu_line_counter')
         if (count)
@@ -134,13 +154,6 @@ class MailsBlock{
 
     #create_mails_block() {
         ElementsManager.combine(this.#block, [this.#mail_creator.block, this.#mail_reader.block, this.#mails_list.block]);
-    }
-
-
-    #reset() {
-        this.#mails_list.show();
-        this.#mail_reader.hide();
-        this.#mail_creator.hide();
     }
 }
 
@@ -175,6 +188,12 @@ class MailsList {
     }
 
 
+    reset() {
+        this.list_block.innerHTML = '';
+        this.#mails_list_to_block();
+    }
+
+
     make_read(id_list) {
         let lines = this.block.querySelectorAll('.list_line');
         lines.forEach(el => {
@@ -196,13 +215,11 @@ class MailsList {
 
     show() {
         this.block.style.display = 'flex';
-        this.parent.refresh = true;
     }
 
 
     hide() {
         this.block.style.display = 'None';
-        this.parent.refresh = false;
         this.clear_selected()
     }
 
@@ -212,6 +229,7 @@ class MailsList {
         if (this.group_checkbox)
             this.group_checkbox.checked = false;
         this.checkboxes.forEach(el => el.checked = false);
+        this.#check_buttons_status();
     }
 
 
@@ -219,8 +237,11 @@ class MailsList {
         if (this.parent.type !== 'sent') {
             this.checkboxes = [];
         }
+        let mails_list_total = this.list.length
+        let mails_for_show = this.parent.number_of_mails
 
-        for (let mail of this.list) {
+        for (let i = 0 ; i < mails_list_total && i < mails_for_show; i++) {
+            let mail = this.list[i];
             let line = new this.MAIL_LINE(mail, this.parent.type);
 
             if (line.checkbox) {
@@ -254,6 +275,12 @@ class MailsList {
 
         if (this.group_checkbox) {
             this.#add_group_checkbox_event();
+        }
+
+        if (this.parent.number_of_mails < this.list.length) {
+            let more = ElementsManager.samples.more_button;
+            this.list_block.appendChild(more);
+            more.addEventListener('click', () => this.parent.get_more_mails());
         }
     }
 
@@ -526,7 +553,6 @@ class MailCreater {
             let draft = this.block.querySelector('#draft');
             draft.addEventListener('click', () => {
                 this.parent.send_draft([this.receivers.value], this.subject.value, this.message.value);
-                console.log([this.receivers.value], this.subject.value, this.message.value);
                 back.click();
             })
         }

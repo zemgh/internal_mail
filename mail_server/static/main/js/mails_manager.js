@@ -7,7 +7,9 @@ class MailsManager {
         this.SentBlock = new MailsBlock('sent');
         this.DeletedBlock = new MailsBlock('deleted');
         this.DraftsBlock = new MailsBlock('drafts')
+
         this.current_block = this.ReceivedBlock;
+        this.current_block.show_mails();
     }
 
     update_blocks(message) {
@@ -15,7 +17,6 @@ class MailsManager {
         this.SentBlock.update(message.sent);
         this.DeletedBlock.update(message.deleted);
         this.DraftsBlock.update(message.drafts);
-        this.update_current_page();
     }
 
 
@@ -38,18 +39,24 @@ class MailsManager {
         this.show_mails_block(this.DraftsBlock);
     }
 
-    update_current_page() {
-        if (this.current_block.refresh === true)
-            this.show_mails_block(this.current_block);
+
+    show_mails_block(block) {
+        this.#clear();
+        this.current_block.reset();
+
+        if (this.current_block !== block) {
+            this.current_block = block;
+        }
+        this.current_block.show_mails();
     }
 
 
-    show_mails_block(obj) {
-        if (this.current_block !== obj)
-            obj.clear_selected();
-        this.current_block = obj;
-        this.#clear();
-        obj.show_mails();
+    get_mails(type, number_of_mails) {
+        let data = {
+            'type': 'get_mails'
+        }
+        data[type] = number_of_mails
+        CONNECTION.send(data);
     }
 
 
@@ -125,6 +132,7 @@ class MailsManager {
         CONNECTION.send(data);
     }
 
+
     read(id_list) {
         let data = {
             'type': 'read_mails',
@@ -145,6 +153,7 @@ class MailsManager {
     raise_alert_error(text) {
         alert(text);
     }
+
 
     #clear() {
         this.#MAILS.innerHTML = "";

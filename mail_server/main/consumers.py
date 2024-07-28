@@ -16,6 +16,11 @@ class MainConsumer(WebsocketConsumer):
     mail_serializer = MailSerializer
     draft = DraftMail
     draft_serializer = DraftSerializer
+    mails_per_page = None
+    received = None
+    sent = None
+    deleted = None
+    drafts = None
 
     def connect(self):
         self.accept()
@@ -27,39 +32,20 @@ class MainConsumer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
         print(f'income from {self.user}:', data)
-
         request_type = data.get('type')
-        if request_type == 'get_mails':
-            self.send_mails()
-        elif request_type == 'create_mail':
-            self.create_mail(data)
-        elif request_type == 'delete_mails':
-            self.delete_mails(data['mails_list'])
-        elif request_type == 'recovery_mails':
-            self.recovery_mails(data['mails_list'])
-        elif request_type == 'read_mails':
-            self.read_mails(data['mails_list'])
-        elif request_type == 'create_draft':
-            self.create_draft(data)
-        elif request_type == 'save_draft':
-            self.save_draft(data)
-        elif request_type == 'convert_to_mail':
-            self.convert_to_mail(data)
-        elif request_type == 'delete_drafts':
-            self.delete_drafts(data['drafts_list'])
-        elif request_type == 'validate_receivers':
-            self.validate_receivers(data['receivers'])
-        elif request_type == 'create_test_mail':
-            self.create_test_mail()
+        method = getattr(self, request_type)
+        method(data)
 
 
-    def send_mails(self, event=None, **kwargs):
+    def send_mails(self, useless_data=None, **kwargs):
+        mod = self.mails_per_page + 1
         all_mails = self.user.received_mails.all()
 
-        mails = all_mails.filter(deleted=False)[:20]
-        sent_mails = self.user.sent_mails.all()[:20]
-        deleted_mails = all_mails.filter(deleted=True)[:20]
-        drafts = self.user.drafts.all()
+        mails = all_mails.filter(deleted=False)[:self.received + mod]
+
+        sent_mails = self.user.sent_mails.all()[:self.sent + mod]
+        deleted_mails = all_mails.filter(deleted=True)[:self.deleted + mod]
+        drafts = self.user.drafts.all()[:self.drafts + mod]
 
         mails_data = self.mail_serializer.get_data_for_json(queryset=mails)
         unread_data = all_mails.filter(deleted=False, read=False).count()
@@ -73,7 +59,7 @@ class MainConsumer(WebsocketConsumer):
             'unread': unread_data,
             'sent': sent_mails_data,
             'deleted': deleted_mails_data,
-            'drafts': drafts_data
+            'drafts': drafts_data,
         }
 
         for k, v in kwargs.items():
@@ -88,6 +74,19 @@ class MainConsumer(WebsocketConsumer):
             'type': 'error',
             'error': error}
         self.send(json.dumps(data))
+
+
+    def init(self, data):
+        self.mails_per_page = data['mails_per_page']
+        self.received = self.sent = self.deleted = self.drafts = self.mails_per_page
+        self.send_mails()
+
+
+    def get_mails(self, data):
+        del data['type']
+        for k, v in data.items():
+            setattr(self, k, v)
+        self.send_mails()
 
 
     def create_mail(self, data):
@@ -107,26 +106,28 @@ class MainConsumer(WebsocketConsumer):
         self.send_mails(close_create_form=True)
 
 
-    def delete_mails(self, id_list):
+    def delete_mails(self, data):
+        id_list = data['mails_list']
         self.mail.objects.filter(id__in=id_list).update(deleted=True)
 
         self.send_mails()
 
 
-    def recovery_mails(self, id_list):
+    def recovery_mails(self, data):
+        id_list = data['mails_list']
         self.mail.objects.filter(id__in=id_list).update(deleted=False)
 
         self.send_mails()
 
 
-    def read_mails(self, id_list):
+    def read_mails(self, data):
+        id_list = data['mails_list']
         self.mail.objects.filter(id__in=id_list).update(read=True)
 
         self.send_mails()
 
 
     def create_draft(self, data):
-        print(data['receivers'])
         self.draft.objects.create(
             sender=self.user,
             receivers=' '.join(data['receivers']),
@@ -166,10 +167,16 @@ class MainConsumer(WebsocketConsumer):
         self.send_mails(close_create_form=True)
 
 
-    def delete_drafts(self, id_list):
+    def delete_drafts(self, data):
+        id_list = data['drafts_list']
         self.draft.objects.filter(id__in=id_list).delete()
 
         self.send_mails()
+
+
+    def signals_handler(self, event):
+        del event['type']
+        self.send_mails(**event)
 
 
     def validate_receivers(self, receivers):
@@ -185,10 +192,11 @@ class MainConsumer(WebsocketConsumer):
 
 
     def disconnect(self, code):
+        self.user.remove_channel()
         print(f'disconnecting by {self.user}: ', code)
 
 
-    def create_test_mail(self):
+    def create_test_mail(self, useless_data):
         user = User.objects.get(username='test_user')
         mail = self.mail.objects.create(
             sender=user,
@@ -197,5 +205,3 @@ class MainConsumer(WebsocketConsumer):
         )
         mail.receivers.add(self.user)
         mail.save()
-
-        self.send_mails()

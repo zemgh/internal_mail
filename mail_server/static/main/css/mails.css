@@ -3,7 +3,7 @@ div.mails{
     flex-direction: column;
     gap: 10px;
     width: 60%;
-    height: 700px;
+    min-height: 700px;
 }
 
 
@@ -119,6 +119,20 @@ div.list_line_subject{
 div.list_line_datetime{
     width: 10%;
     text-align: right;
+}
+
+button.list_more_button{
+    align-self: center;
+    border: 0;
+    font-size: 16px;
+    background-color: dodgerblue;
+    border-radius: 5px;
+    margin-top: 10px;
+    padding: 5px 10px 5px 10px;
+}
+
+button.list_more_button:hover{
+    background-color: white;
 }
 
 

@@ -13,5 +13,5 @@ def new_mail(sender, instance, created, **kwargs):
         for user in receivers:
             channel_layer = get_channel_layer()
             channel_name = user.channel
-            message = {'type': 'send_mails'}
+            message = {'type': 'signals_handler', 'test': 'test'}
             async_to_sync(channel_layer.send)(channel_name, message)

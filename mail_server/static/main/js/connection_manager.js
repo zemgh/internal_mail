@@ -10,6 +10,7 @@ class ConnectionManager {
         this.websocket.onmessage = () => {
             let message = JSON.parse(event.data);
             console.log('incoming message:', message);
+
             switch (message.type) {
                 case 'get_mails':
                         if (message.close_create_form)
@@ -24,7 +25,10 @@ class ConnectionManager {
 
 
     get_init_data() {
-        let request = {'type': 'get_mails'};
+        let request = {
+            'type': 'init',
+            'mails_per_page': window.MAILS_PER_PAGE
+        };
         this.send(request);
     }
 
