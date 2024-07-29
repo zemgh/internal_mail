@@ -32,7 +32,10 @@ class MailsBlock{
 
     get_more_mails() {
         this.mails_per_page_multiplier++
-        MAILS_MANAGER.get_mails(this.type, this.number_of_mails);
+        let options = {}
+        options[this.type] = this.number_of_mails
+
+        MAILS_MANAGER.get_mails(options);
     }
 
 
@@ -119,12 +122,18 @@ class MailsBlock{
 
 
     reset() {
-        // this.clear_selected();
         this.#mails_list.show();
         this.#mail_reader.hide();
         this.#mail_creator.hide();
-        this.mails_per_page_multiplier = 1;
-        this.#mails_list.reset();
+        if (this.mails_per_page_multiplier !== 1) {
+            this.mails_per_page_multiplier = 1;
+            this.#mails_list.list = this.#mails_list.list.slice(0, window.MAILS_PER_PAGE * 2 + 1)
+            let options = {};
+            options[this.type] = 'default';
+            window.MAILS_MANAGER.get_mails(options);
+        }
+        else
+            this.#mails_list.reset();
     }
 
 
@@ -278,7 +287,7 @@ class MailsList {
         }
 
         if (this.parent.number_of_mails < this.list.length) {
-            let more = ElementsManager.samples.more_button;
+            let more = ElementsManager.samples.more_button.cloneNode(true);
             this.list_block.appendChild(more);
             more.addEventListener('click', () => this.parent.get_more_mails());
         }

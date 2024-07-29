@@ -16,11 +16,13 @@ class MainConsumer(WebsocketConsumer):
     mail_serializer = MailSerializer
     draft = DraftMail
     draft_serializer = DraftSerializer
-    mails_per_page = None
-    received = None
-    sent = None
-    deleted = None
-    drafts = None
+
+    mails_per_page = 18
+    received_pp = None
+    sent_pp = None
+    deleted_pp = None
+    drafts_pp = None
+
 
     def connect(self):
         self.accept()
@@ -32,41 +34,84 @@ class MainConsumer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
         print(f'income from {self.user}:', data)
+
         request_type = data.get('type')
+        del data['type']
         method = getattr(self, request_type)
         method(data)
 
 
-    def send_mails(self, useless_data=None, **kwargs):
-        mod = self.mails_per_page + 1
-        all_mails = self.user.received_mails.all()
+    def disconnect(self, code):
+        self.user.remove_channel()
+        print(f'disconnecting by {self.user}: ', code)
 
-        mails = all_mails.filter(deleted=False)[:self.received + mod]
 
-        sent_mails = self.user.sent_mails.all()[:self.sent + mod]
-        deleted_mails = all_mails.filter(deleted=True)[:self.deleted + mod]
-        drafts = self.user.drafts.all()[:self.drafts + mod]
-
-        mails_data = self.mail_serializer.get_data_for_json(queryset=mails)
-        unread_data = all_mails.filter(deleted=False, read=False).count()
-        sent_mails_data = self.mail_serializer.get_data_for_json(queryset=sent_mails)
-        deleted_mails_data = self.mail_serializer.get_data_for_json(queryset=deleted_mails)
-        drafts_data = self.draft_serializer.get_data_for_json(queryset=drafts)
-
+    def send_mails(self, methods=None, **kwargs):
         data = {
-            'type': 'get_mails',
-            'received': mails_data,
-            'unread': unread_data,
-            'sent': sent_mails_data,
-            'deleted': deleted_mails_data,
-            'drafts': drafts_data,
+            'type': 'get_mails'
         }
+
+        if not methods:
+            data.update(self.send_all_mails())
+        else:
+            for method in methods:
+                data.update(method())
 
         for k, v in kwargs.items():
             data[k] = v
 
         self.send(json.dumps(data))
         print(f'send to {self.user}:', data)
+
+
+    def send_all_mails(self):
+        send_data = {}
+        methods = [self.send_received, self.send_sent, self.send_deleted, self.send_drafts]
+        for method in methods:
+            send_data.update(method())
+        return send_data
+
+
+    def send_received(self):
+        number_of_mails = self.received_pp + self.mails_per_page + 1
+        received_mails = self.user.received_mails.filter(deleted=False)[:number_of_mails]
+        mails_data = self.mail_serializer.get_data_for_json(queryset=received_mails)
+        unread_data = self.user.received_mails.filter(deleted=False, read=False).count()
+        send_data = {'received': mails_data, 'unread': unread_data}
+        return send_data
+
+
+    def send_sent(self):
+        number_of_mails = self.sent_pp + self.mails_per_page + 1
+        sent_mails = self.user.sent_mails.all()[:number_of_mails]
+        mails_data = self.mail_serializer.get_data_for_json(queryset=sent_mails)
+        send_data = {'sent': mails_data}
+        return send_data
+
+
+    def send_deleted(self):
+        number_of_mails = self.drafts_pp + self.mails_per_page + 1
+        deleted_mails = self.user.received_mails.filter(deleted=True)[:number_of_mails]
+        mails_data = self.mail_serializer.get_data_for_json(queryset=deleted_mails)
+        send_data = {'deleted': mails_data}
+        return send_data
+
+
+    def send_drafts(self):
+        number_of_mails = self.drafts_pp + self.mails_per_page + 1
+        drafts = self.user.drafts.all()[:number_of_mails]
+        drafts_data = self.draft_serializer.get_data_for_json(queryset=drafts)
+        send_data = {'drafts': drafts_data}
+        return send_data
+
+
+    def send_command(self, command):
+        data = {
+            'type': 'command',
+            'command': command
+        }
+        self.send(json.dumps(data))
+        print('sent command:', command)
 
 
     def send_error(self, error):
@@ -78,15 +123,22 @@ class MainConsumer(WebsocketConsumer):
 
     def init(self, data):
         self.mails_per_page = data['mails_per_page']
-        self.received = self.sent = self.deleted = self.drafts = self.mails_per_page
+        self.received_pp = self.sent_pp = self.deleted_pp = self.drafts_pp = self.mails_per_page
         self.send_mails()
 
 
     def get_mails(self, data):
-        del data['type']
+        methods = []
         for k, v in data.items():
-            setattr(self, k, v)
-        self.send_mails()
+            if v != 'default':
+                setattr(self, k + '_pp', v)
+            else:
+                setattr(self, k + '_pp', self.mails_per_page)
+            method = getattr(self, 'send_' + k)
+            methods.append(method)
+
+        self.send_mails(methods=methods)
+
 
 
     def create_mail(self, data):
@@ -103,28 +155,28 @@ class MainConsumer(WebsocketConsumer):
         mail.receivers.set(receivers)
         mail.save()
 
-        self.send_mails(close_create_form=True)
+        self.send_command('close_create_form')
 
 
     def delete_mails(self, data):
         id_list = data['mails_list']
         self.mail.objects.filter(id__in=id_list).update(deleted=True)
 
-        self.send_mails()
+        self.send_mails(methods=[self.send_received, self.send_deleted])
 
 
     def recovery_mails(self, data):
         id_list = data['mails_list']
         self.mail.objects.filter(id__in=id_list).update(deleted=False)
 
-        self.send_mails()
+        self.send_mails(methods=[self.send_received, self.send_deleted])
 
 
     def read_mails(self, data):
         id_list = data['mails_list']
         self.mail.objects.filter(id__in=id_list).update(read=True)
 
-        self.send_mails()
+        self.send_mails(methods=[self.send_received])
 
 
     def create_draft(self, data):
@@ -135,8 +187,6 @@ class MainConsumer(WebsocketConsumer):
             message=data['message']
         )
 
-        self.send_mails(close_create_form=True)
-
 
     def save_draft(self, data):
         draft = self.draft.objects.get(id=data['id'])
@@ -145,7 +195,7 @@ class MainConsumer(WebsocketConsumer):
         draft.message = data['message']
         draft.save()
 
-        self.send_mails()
+        self.send_mails(methods=[self.send_drafts])
 
 
     def convert_to_mail(self, data):
@@ -164,19 +214,21 @@ class MainConsumer(WebsocketConsumer):
 
         self.draft.objects.get(id=data['id']).delete()
 
-        self.send_mails(close_create_form=True)
+        self.send_mails(methods=[self.send_received, self.send_drafts], command='close_create_form')
 
 
     def delete_drafts(self, data):
         id_list = data['drafts_list']
         self.draft.objects.filter(id__in=id_list).delete()
 
-        self.send_mails()
+        self.send_mails(methods=[self.send_drafts])
 
 
-    def signals_handler(self, event):
-        del event['type']
-        self.send_mails(**event)
+    def signals_handler(self, message, **kwargs):
+        methods = []
+        for method in message['methods']:
+            methods.append(getattr(self, method))
+        self.send_mails(methods=methods, **kwargs)
 
 
     def validate_receivers(self, receivers):
@@ -189,11 +241,6 @@ class MainConsumer(WebsocketConsumer):
             return f'Пользователя {validate_result[0]} не существует!'
         elif len(validate_result) > 1:
             return f'Пользователей {', '.join(validate_result)} не существует!'
-
-
-    def disconnect(self, code):
-        self.user.remove_channel()
-        print(f'disconnecting by {self.user}: ', code)
 
 
     def create_test_mail(self, useless_data):

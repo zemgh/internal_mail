@@ -13,10 +13,14 @@ class MailsManager {
     }
 
     update_blocks(message) {
-        this.ReceivedBlock.update(message.received, message.unread);
-        this.SentBlock.update(message.sent);
-        this.DeletedBlock.update(message.deleted);
-        this.DraftsBlock.update(message.drafts);
+        if (message.received)
+            this.ReceivedBlock.update(message.received, message.unread);
+        if (message.sent)
+            this.SentBlock.update(message.sent);
+        if (message.deleted)
+            this.DeletedBlock.update(message.deleted);
+        if (message.drafts)
+            this.DraftsBlock.update(message.drafts);
     }
 
 
@@ -51,11 +55,12 @@ class MailsManager {
     }
 
 
-    get_mails(type, number_of_mails) {
+    get_mails(options) {
         let data = {
             'type': 'get_mails'
         }
-        data[type] = number_of_mails
+        if (options)
+            Object.assign(data, options);
         CONNECTION.send(data);
     }
 
@@ -147,6 +152,13 @@ class MailsManager {
             'type': 'create_test_mail',
         }
         CONNECTION.send(data);
+    }
+
+
+    handle_command(command) {
+        switch(command) {
+            case 'close_create_form': this.current_block.close_create_mail_form(); break;
+        }
     }
 
 

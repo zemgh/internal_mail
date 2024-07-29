@@ -13,12 +13,14 @@ class ConnectionManager {
 
             switch (message.type) {
                 case 'get_mails':
-                        if (message.close_create_form)
-                            MAILS_MANAGER.current_block.close_create_mail_form();
-                        MAILS_MANAGER.update_blocks(message);
-                        break;
-                case 'error':
-                        MAILS_MANAGER.raise_alert_error(message['error'])
+                    MAILS_MANAGER.update_blocks(message);
+                    if (message.command)
+                        MAILS_MANAGER.handle_command(message.command);
+                    break;
+
+                case 'command': MAILS_MANAGER.handle_command(message.command); break
+
+                case 'error': MAILS_MANAGER.raise_alert_error(message['error']); break;
             }
         }
     }
@@ -38,6 +40,4 @@ class ConnectionManager {
         console.log('send message: ', json_data)
         this.websocket.send(json_data);
     }
-
-
 }
