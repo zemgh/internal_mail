@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth import get_user_model
@@ -17,18 +17,19 @@ class MainConsumer(WebsocketConsumer):
     draft = DraftMail
     draft_serializer = DraftSerializer
 
-    mails_per_page = 18
-    received_pp = None
-    sent_pp = None
-    deleted_pp = None
-    drafts_pp = None
+    mails_per_page_default = None
+    mails_per_page_current = None
+    mails_per_page_type = None
 
+    filter_type = None
+    _filter_options = None
 
     def connect(self):
         self.accept()
         self.user = self.scope['user'].__dict__['_wrapped']
-        self.user.add_channel(self.channel_name)
-        print(f'user <{self.user}> connected at', datetime.now().strftime('%H:%M:%S'))
+        self.user.channel = self.channel_name
+        self.user.save(update_fields=['channel'])
+        print(f'\nuser <{self.user}> connected at', datetime.now().strftime('%H:%M:%S'), f'\nchannel name: {self.channel_name}\n')
 
 
     def receive(self, text_data=None, bytes_data=None):
@@ -42,7 +43,8 @@ class MainConsumer(WebsocketConsumer):
 
 
     def disconnect(self, code):
-        self.user.remove_channel()
+        self.user.channel = None
+        self.user.save(update_fields=['channel'])
         print(f'disconnecting by {self.user}: ', code)
 
 
@@ -55,7 +57,8 @@ class MainConsumer(WebsocketConsumer):
             data.update(self.send_all_mails())
         else:
             for method in methods:
-                data.update(method())
+                mails = method()
+                data.update(mails)
 
         for k, v in kwargs.items():
             data[k] = v
@@ -73,8 +76,13 @@ class MainConsumer(WebsocketConsumer):
 
 
     def send_received(self):
-        number_of_mails = self.received_pp + self.mails_per_page + 1
-        received_mails = self.user.received_mails.filter(deleted=False)[:number_of_mails]
+        number_of_mails = self.get_number_of_mails('received')
+
+        if self.filter_type and self.filter_type == 'received':
+            received_mails = self.user.received_mails.filter(deleted=False, **self.filter_options)[:number_of_mails]
+        else:
+            received_mails = self.user.received_mails.filter(deleted=False)[:number_of_mails]
+
         mails_data = self.mail_serializer.get_data_for_json(queryset=received_mails)
         unread_data = self.user.received_mails.filter(deleted=False, read=False).count()
         send_data = {'received': mails_data, 'unread': unread_data}
@@ -82,7 +90,7 @@ class MainConsumer(WebsocketConsumer):
 
 
     def send_sent(self):
-        number_of_mails = self.sent_pp + self.mails_per_page + 1
+        number_of_mails = self.get_number_of_mails('sent')
         sent_mails = self.user.sent_mails.all()[:number_of_mails]
         mails_data = self.mail_serializer.get_data_for_json(queryset=sent_mails)
         send_data = {'sent': mails_data}
@@ -90,7 +98,7 @@ class MainConsumer(WebsocketConsumer):
 
 
     def send_deleted(self):
-        number_of_mails = self.drafts_pp + self.mails_per_page + 1
+        number_of_mails = self.get_number_of_mails('deleted')
         deleted_mails = self.user.received_mails.filter(deleted=True)[:number_of_mails]
         mails_data = self.mail_serializer.get_data_for_json(queryset=deleted_mails)
         send_data = {'deleted': mails_data}
@@ -98,11 +106,34 @@ class MainConsumer(WebsocketConsumer):
 
 
     def send_drafts(self):
-        number_of_mails = self.drafts_pp + self.mails_per_page + 1
+        number_of_mails = self.get_number_of_mails('drafts')
         drafts = self.user.drafts.all()[:number_of_mails]
         drafts_data = self.draft_serializer.get_data_for_json(queryset=drafts)
         send_data = {'drafts': drafts_data}
         return send_data
+
+
+    def get_number_of_mails(self, mails_type):
+        if self.mails_per_page_type == mails_type:
+            return self.mails_per_page_current + self.mails_per_page_default + 1
+        return self.mails_per_page_default * 2 + 1
+
+
+    @property
+    def filter_options(self):
+        return self._filter_options
+
+    @filter_options.setter
+    def filter_options(self, options):
+        fields = {}
+        for k, v in options.items():
+            if k in ('username', 'first_name', 'last_name'):
+                fields[f'sender__{k}__icontains'] = v
+            elif k == 'first_date':
+                fields['created__gte'] = datetime.strptime(v, '%Y-%m-%d')
+            elif k == 'last_date':
+                fields['created__lte'] = datetime.strptime(v, '%Y-%m-%d') + timedelta(days=1)
+        self._filter_options = fields
 
 
     def send_command(self, command):
@@ -122,8 +153,7 @@ class MainConsumer(WebsocketConsumer):
 
 
     def init(self, data):
-        self.mails_per_page = data['mails_per_page']
-        self.received_pp = self.sent_pp = self.deleted_pp = self.drafts_pp = self.mails_per_page
+        self.mails_per_page_default = data['mails_per_page']
         self.send_mails()
 
 
@@ -131,14 +161,23 @@ class MainConsumer(WebsocketConsumer):
         methods = []
         for k, v in data.items():
             if v != 'default':
-                setattr(self, k + '_pp', v)
-            else:
-                setattr(self, k + '_pp', self.mails_per_page)
-            method = getattr(self, 'send_' + k)
-            methods.append(method)
+                setattr(self, 'mails_per_page_type', k)
+                setattr(self, 'mails_per_page_current', v)
+                method = getattr(self, 'send_' + k)
+                methods.append(method)
+
+            elif v == 'default':
+                setattr(self, 'mails_per_current', None)
 
         self.send_mails(methods=methods)
 
+
+    def filter(self, data):
+        self.filter_type = data['filter_type']
+        self.filter_options = data['filter_options']
+
+        method = getattr(self, f'send_{data['filter_type']}')
+        self.send_mails(methods=[method])
 
 
     def create_mail(self, data):
@@ -244,7 +283,16 @@ class MainConsumer(WebsocketConsumer):
 
 
     def create_test_mail(self, useless_data):
-        user = User.objects.get(username='test_user')
+        try:
+            user = User.objects.get(username='test_user')
+        except User.DoesNotExist:
+            user = User.objects.create_user(
+                username='test_user',
+                first_name='Тестовый',
+                last_name='Юзвер',
+                secret_word='йцукен'
+            )
+
         mail = self.mail.objects.create(
             sender=user,
             subject='test_mail',
@@ -252,3 +300,4 @@ class MainConsumer(WebsocketConsumer):
         )
         mail.receivers.add(self.user)
         mail.save()
+        print(f'sended test mail to {', '.join([user.username for user in mail.receivers.all()])}')

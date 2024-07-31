@@ -95,17 +95,17 @@ function ElementsManagerClass () {
     this.create_new_mail_form = function(type) {
         //      Создание письма
 
-        let main_block = this.create_base_node('form', {className: 'create_form'});
+        let main_block = this.create_base_node('div', {className: 'create_form'});
         let options_block = this.create_new_mail_options_block(type);
-        let receivers = this.create_input_with_label('receivers', 'Кому:');
-        let subject = this.create_input_with_label('subject', 'Тема:');
+        let receivers = this.create_input_with_label_new_mail('receivers', 'Кому:');
+        let subject = this.create_input_with_label_new_mail('subject', 'Тема:');
         let message = this.create_base_node('textarea', {className: 'create_message', id: 'message'});
 
         return this.combine(main_block, [options_block, receivers, subject, message]);
     }
 
 
-    this.create_input_with_label = function(id, text) {
+    this.create_input_with_label_new_mail = function(id, text) {
         let line = this.create_base_node('div',{className: 'create_line'});
         let input = this.create_base_node('input', {type: 'text', className: 'create_receivers_subject', id: id});
         let label = this.create_base_node('div', {className: 'create_label', innerText: text});
@@ -180,19 +180,37 @@ function ElementsManagerClass () {
         return this.create_base_node('button', {className: 'list_more_button', id: 'more', innerText: 'Ещё письма'})
     }
 
+    this.create_filter_block = function() {
+        let block = this.create_base_node('div', {className: 'mails_filter'});
+        let username = this.create_input_with_label_filter('username', 'Логин:');
+        let first_name = this.create_input_with_label_filter('first_name', 'Фамилия:');
+        let last_name = this.create_input_with_label_filter('last_name', 'Имя:');
+        let first_date = this.create_input_with_label_filter('first_date', 'Начало:', true);
+        let last_date = this.create_input_with_label_filter('last_date', 'Конец:', true);
+        let filter_button = this.create_base_node('button', {className: 'filter_button', id: 'filter', innerText: 'Показать'});
+
+        this.combine(block, [username, first_name, last_name, first_date, last_date, filter_button])
+        return block;
+    }
+
+    this.create_input_with_label_filter = function(id, text, date=false) {
+        let line = this.create_base_node('div',{className: 'filter_line'});
+        let input;
+        if (!date)
+            input = this.create_base_node('input', {type: 'text', className: 'filter_input', id: id});
+        else
+            input = this.create_base_node('input', {type: 'date', className: 'filter_input', id: id});
+        let label = this.create_base_node('div', {className: 'filter_label', innerText: text});
+
+        return this.combine(line, [label, input]);
+    }
 
     this.samples = {
         mails_block: this.create_mails_block(),
         mails_list: this.create_mails_list(),
         mails_line: this.create_mails_line(),
         mails_line_with_checkbox: this.create_mails_line(true),
-        more_button: this.create_more_button()
+        more_button: this.create_more_button(),
+        filter: this.create_filter_block()
     }
 }
-
-//
-//
-// function clear_lines_checkboxes(mails_block) {
-//     let boxes = mails_block.querySelectorAll('.list_line_checkbox');
-//     boxes.forEach(el => el.checked = false);
-// }

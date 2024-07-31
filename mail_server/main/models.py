@@ -46,6 +46,8 @@ class Mail(models.Model, BaseMailsModel):
     deferred_datetime = models.DateTimeField(null=True, blank=True)
 
 
+
+
 class DraftMail(models.Model, BaseMailsModel):
     class Meta:
         ordering = ['-created']

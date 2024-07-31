@@ -2,6 +2,7 @@ class MailsBlock{
     #mail_creator;
     #mail_reader;
     #mails_list;
+    #filter;
 
     mails_per_page_multiplier = 1;
 
@@ -14,6 +15,7 @@ class MailsBlock{
         this.#mail_creator = new MailCreater(this);
         this.#mail_reader = new MailViewer(this);
         this.#mails_list = new MailsList(this);
+        this.#filter = new Filter(this)
         this.#create_mails_block();
     }
 
@@ -36,6 +38,15 @@ class MailsBlock{
         options[this.type] = this.number_of_mails
 
         MAILS_MANAGER.get_mails(options);
+    }
+
+
+    send_filter(options) {
+        for (let k in options) {
+            if (options[k] === '')
+                delete options[k];
+        }
+        MAILS_MANAGER.send_filter(this.type, options);
     }
 
 
@@ -162,7 +173,7 @@ class MailsBlock{
 
 
     #create_mails_block() {
-        ElementsManager.combine(this.#block, [this.#mail_creator.block, this.#mail_reader.block, this.#mails_list.block]);
+        ElementsManager.combine(this.#block, [this.#filter.block, this.#mail_creator.block, this.#mail_reader.block, this.#mails_list.block]);
     }
 }
 
@@ -577,6 +588,93 @@ class MailCreater {
                 this.parent.send_mail(receivers, subject, message);
         }
     }
+}
+
+
+class Filter {
+
+    block = ElementsManager.samples.filter.cloneNode(true);
+    username = this.block.querySelector('#username');
+    first_name = this.block.querySelector('#first_name');
+    last_name = this.block.querySelector('#last_name');
+    first_date = this.block.querySelector('#first_date');
+    last_date = this.block.querySelector('#last_date');
+    button = this.block.querySelector('#filter');
+
+
+    constructor(parent) {
+
+        this.parent = parent;
+
+        this.#set_min_max_dates_for_input();
+        this.#add_date_inputs_events();
+        this.#add_button_event();
+        this.show();
+    }
+
+    show() {
+        this.block.style.display = 'flex';
+        this.#set_default_date();
+    }
+
+    hide() {
+        this.block.style.display = 'None';
+        this.#clear();
+    }
+
+    #add_date_inputs_events() {
+        this.first_date.addEventListener('change', () => {
+            let last_date_min = new Date(this.first_date.value);
+            this.last_date.min = last_date_min.toISOString().split('T')[0];
+        })
+
+        this.last_date.addEventListener('change', () => {
+            let first_day_max = new Date(this.last_date.value);
+            this.first_date.max = first_day_max.toISOString().split('T')[0];
+        })
+    }
+
+    #add_button_event() {
+        this.button.addEventListener('click', () => {
+            this.parent.send_filter({
+                'username': this.username.value,
+                'first_name': this.first_name.value,
+                'last_name': this.last_name.value,
+                'first_date': this.first_date.value,
+                'last_date': this.last_date.value
+            })
+        })
+    }
+
+    #clear() {
+        this.username.value = '';
+        this.first_name.value = '';
+        this.last_name.value = '';
+    }
+
+    #set_min_max_dates_for_input() {
+        let last_date_max = new Date();
+        this.last_date.max = last_date_max.toISOString().split('T')[0];
+
+        let first_date_min = new Date();
+        first_date_min.setFullYear(first_date_min.getFullYear() - 1);
+        this.first_date.min = first_date_min.toISOString().split('T')[0];
+
+        let last_date_min = new Date();
+        last_date_min.setFullYear(last_date_min.getFullYear());
+        this.last_date.min = last_date_min.toISOString().split('T')[0];
+
+        let first_date_max = new Date();
+        this.first_date.max = first_date_max.toISOString().split('T')[0];
+    }
+
+    #set_default_date() {
+        let date = new Date()
+        this.last_date.value = date.toISOString().split('T')[0];
+        this.first_date.value = date.toISOString().split('T')[0];
+    }
+
+
 }
 
 

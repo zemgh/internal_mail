@@ -64,6 +64,15 @@ class MailsManager {
         CONNECTION.send(data);
     }
 
+    send_filter(type, options) {
+        let data = {
+            'type': 'filter',
+            'filter_type': type,
+            'filter_options' : options
+        }
+        CONNECTION.send(data);
+    }
+
 
     send_mail(receivers, subject, message) {
         let data = {

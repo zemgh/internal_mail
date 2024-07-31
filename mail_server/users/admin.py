@@ -8,7 +8,13 @@ User = get_user_model()
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    fields = ['username', 'first_name', 'last_name', 'password', 'secret_word']
+    fields = ['username', 'first_name', 'last_name', 'channel', 'password']
+    list_display = ['username', 'first_name', 'last_name', 'is_online']
+
+    def save_model(self, request, obj, form, change):
+        if 'password' in form.changed_data:
+            obj.set_password(form.cleaned_data['password'])
+        return super().save_model(request, obj, form, change)
 
 
 @admin.register(UserResetToken)

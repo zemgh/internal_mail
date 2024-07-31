@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+
 class CustomUserManager(BaseUserManager):
 
     def create_user(self, username, password=None, **extra_fields):
@@ -84,13 +85,12 @@ class User(AbstractBaseUser):
     def get_full_name(self):
         return f'{self.last_name} {self.first_name}'
 
-    def add_channel(self, channel_name):
-        self.channel = channel_name
-        return self.save()
 
-    def remove_channel(self):
-        self.channel = None
-        return self.save()
+    @property
+    def is_online(self):
+        if self.channel:
+            return True
+        return False
 
     @staticmethod
     def __hash_secret_word(secret_word: str) -> str:
@@ -126,4 +126,3 @@ class UserResetToken(models.Model):
 
     def is_active(self):
         return self.created + timezone.timedelta(seconds=self.token_lifetime) > timezone.now()
-
