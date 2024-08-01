@@ -167,7 +167,8 @@ class MainConsumer(WebsocketConsumer):
                 methods.append(method)
 
             elif v == 'default':
-                setattr(self, 'mails_per_current', None)
+                setattr(self, 'mails_per_page_current', None)
+                setattr(self, 'mails_per_page_type', None)
 
         self.send_mails(methods=methods)
 

@@ -45,8 +45,19 @@ input.filter_input{
     border-radius: 5px;
 }
 
+div.filter_block{
+    display: flex;
+    justify-content: end;
+    width: 100%;
+}
+
+div.filter_buttons_block{
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
 button.filter_button{
-    align-self: center;
     border: 0;
     font-size: 16px;
     background-color: green;

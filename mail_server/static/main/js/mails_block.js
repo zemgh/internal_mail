@@ -15,7 +15,6 @@ class MailsBlock{
         this.#mail_creator = new MailCreater(this);
         this.#mail_reader = new MailViewer(this);
         this.#mails_list = new MailsList(this);
-        this.#filter = new Filter(this)
         this.#create_mails_block();
     }
 
@@ -33,9 +32,9 @@ class MailsBlock{
 
 
     get_more_mails() {
-        this.mails_per_page_multiplier++
-        let options = {}
-        options[this.type] = this.number_of_mails
+        this.mails_per_page_multiplier++;
+        let options = {};
+        options[this.type] = this.number_of_mails;
 
         MAILS_MANAGER.get_mails(options);
     }
@@ -136,9 +135,12 @@ class MailsBlock{
         this.#mails_list.show();
         this.#mail_reader.hide();
         this.#mail_creator.hide();
+        if (['sent', 'drafts'].includes(this.type) === false)
+            this.#filter.hide();
         if (this.mails_per_page_multiplier !== 1) {
             this.mails_per_page_multiplier = 1;
             this.#mails_list.list = this.#mails_list.list.slice(0, window.MAILS_PER_PAGE * 2 + 1)
+
             let options = {};
             options[this.type] = 'default';
             window.MAILS_MANAGER.get_mails(options);
@@ -173,8 +175,15 @@ class MailsBlock{
 
 
     #create_mails_block() {
-        ElementsManager.combine(this.#block, [this.#filter.block, this.#mail_creator.block, this.#mail_reader.block, this.#mails_list.block]);
+        ElementsManager.combine(this.#block, [this.#mail_creator.block, this.#mail_reader.block, this.#mails_list.block]);
+        if (['sent', 'drafts'].includes(this.type) === false) {
+            this.#filter = new Filter(this, this.#mails_list.block.querySelector('#show_filter'));
+            this.#block.prepend(this.#filter.block);
+            this.#filter.hide();
+        }
     }
+
+
 }
 
 
@@ -191,6 +200,7 @@ class MailsList {
 
     constructor(parent) {
         this.parent = parent;
+
         if (this.parent.type !== 'sent') {
             this.options_block = ElementsManager.create_mails_list_options_block(parent.type);
             this.block.prepend(this.options_block);
@@ -240,7 +250,7 @@ class MailsList {
 
     hide() {
         this.block.style.display = 'None';
-        this.clear_selected()
+        this.clear_selected();
     }
 
 
@@ -303,6 +313,7 @@ class MailsList {
             more.addEventListener('click', () => this.parent.get_more_mails());
         }
     }
+
 
     #add_group_checkbox_event() {
         this.group_checkbox.addEventListener('change', () => {
@@ -383,13 +394,11 @@ class MailsList {
             })
         }
 
-
         function clear(obj) {
             obj.clear_selected();
             obj.#check_buttons_status();
         }
     }
-
 
 
     #make_buttons_disabled() {
@@ -409,6 +418,8 @@ class MailsList {
             el.replaceWith(el.cloneNode(true));
         })
     }
+
+
 }
 
 
@@ -578,6 +589,7 @@ class MailCreater {
         }
     }
 
+
     #check_data_and_send(receivers, subject, message, convert_to_mail=false, id=null) {
         if (!receivers || !subject || !message)
             alert('Все поля должны быть заполнены!');
@@ -588,6 +600,8 @@ class MailCreater {
                 this.parent.send_mail(receivers, subject, message);
         }
     }
+
+
 }
 
 
@@ -599,28 +613,54 @@ class Filter {
     last_name = this.block.querySelector('#last_name');
     first_date = this.block.querySelector('#first_date');
     last_date = this.block.querySelector('#last_date');
-    button = this.block.querySelector('#filter');
+    send_button = this.block.querySelector('#filter');
+    reset_button = this.block.querySelector('#filter-reset');
+    block_show = false;
 
 
-    constructor(parent) {
-
+    constructor(parent, show_button) {
         this.parent = parent;
+        this.show_button = show_button;
+        this.default_show_button = this.show_button.cloneNode(true);
 
         this.#set_min_max_dates_for_input();
         this.#add_date_inputs_events();
-        this.#add_button_event();
-        this.show();
+        this.#add_buttons_events();
     }
+
 
     show() {
         this.block.style.display = 'flex';
+        this.block_show = true;
         this.#set_default_date();
+        this.#add_show_button_event(this)
     }
+
 
     hide() {
         this.block.style.display = 'None';
+        this.block_show = false;
         this.#clear();
+        this.#add_show_button_event(this)
     }
+
+
+    #add_show_button_event(self) {
+        function hide_event() {
+            self.hide();
+        }
+
+        function show_event() {
+            self.show();
+        }
+
+        if (this.block_show === true)
+            this.show_button.addEventListener('click', hide_event, {once: true});
+
+        if (this.block_show === false)
+            this.show_button.addEventListener('click', show_event, {once: true});
+    }
+
 
     #add_date_inputs_events() {
         this.first_date.addEventListener('change', () => {
@@ -634,8 +674,9 @@ class Filter {
         })
     }
 
-    #add_button_event() {
-        this.button.addEventListener('click', () => {
+
+    #add_buttons_events() {
+        this.send_button.addEventListener('click', () => {
             this.parent.send_filter({
                 'username': this.username.value,
                 'first_name': this.first_name.value,
@@ -644,13 +685,20 @@ class Filter {
                 'last_date': this.last_date.value
             })
         })
+
+        this.reset_button.addEventListener('click', () => {
+            this.#clear();
+            this.send_button.click();
+        })
     }
+
 
     #clear() {
         this.username.value = '';
         this.first_name.value = '';
         this.last_name.value = '';
     }
+
 
     #set_min_max_dates_for_input() {
         let last_date_max = new Date();
@@ -668,6 +716,7 @@ class Filter {
         this.first_date.max = first_date_max.toISOString().split('T')[0];
     }
 
+
     #set_default_date() {
         let date = new Date()
         this.last_date.value = date.toISOString().split('T')[0];
@@ -679,6 +728,7 @@ class Filter {
 
 
 class MailLine {
+
     constructor(mail, type) {
         this.mail = mail;
         this.type = type;
@@ -697,12 +747,12 @@ class MailLine {
         this.datetime = this.block.querySelector('#datetime');
         this.block.id = mail.id;
 
-        if (this.type === 'sent' || this.type === 'drafts' || mail.read === true)
+        if (['sent', 'drafts'].includes(this.type) || mail.read === true)
             this.inner_line.className = 'list_inner_line';
         else
             this.inner_line.className = 'list_inner_line_unread';
 
-        if (this.type === 'sent' || this.type === 'drafts')
+        if (['sent', 'drafts'].includes(this.type))
             this.sender.innerText = this.mail.receivers;
         else
             this.sender.innerText = this.mail.sender;
@@ -710,5 +760,7 @@ class MailLine {
         this.subject.innerText = this.mail.subject;
         this.datetime.innerText = this.mail.created.short;
     }
+
+
 }
 

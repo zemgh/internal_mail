@@ -167,13 +167,21 @@ function ElementsManagerClass () {
             this.combine(options_block, [del]);
         }
 
+        if (['send', 'drafts'].includes(type) === false) {
+            let filter_block = this.create_base_node('div', {className: 'filter_block'});
+            let filter = this.create_options_button_for_list('show_filter', 'Фильтр', true);
+            filter_block.appendChild(filter);
+            options_block.appendChild(filter_block);
+        }
+
         return options_block;
     }
 
-    this.create_options_button_for_list = function(id, text) {
+    this.create_options_button_for_list = function(id, text, active=false) {
         //      Кнопки для списка
 
-        return this.create_base_node('div', {className: 'list_options_button_disabled', id: id, innerText: text});
+        let class_name = active ? 'list_options_button' : 'list_options_button_disabled';
+        return this.create_base_node('div', {className: class_name, id: id, innerText: text});
     }
 
     this.create_more_button = function() {
@@ -187,9 +195,12 @@ function ElementsManagerClass () {
         let last_name = this.create_input_with_label_filter('last_name', 'Имя:');
         let first_date = this.create_input_with_label_filter('first_date', 'Начало:', true);
         let last_date = this.create_input_with_label_filter('last_date', 'Конец:', true);
-        let filter_button = this.create_base_node('button', {className: 'filter_button', id: 'filter', innerText: 'Показать'});
+        let filter_buttons = this.create_base_node('div', {className: 'filter_buttons_block'});
+        let filter_send_button = this.create_base_node('button', {className: 'filter_button', id: 'filter', innerText: 'Показать'});
+        let filter_reset_button = this.create_base_node('button', {className: 'filter_button', id: 'filter-reset', innerText: 'Сбросить'});
+        this.combine(filter_buttons, [filter_send_button, filter_reset_button]);
 
-        this.combine(block, [username, first_name, last_name, first_date, last_date, filter_button])
+        this.combine(block, [username, first_name, last_name, first_date, last_date, filter_buttons]);
         return block;
     }
 
