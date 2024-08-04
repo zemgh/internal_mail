@@ -65,10 +65,10 @@ class MailsBlock{
     }
 
 
-    create_mail(reply_mail=null, draft=false) {
+    create_mail(reply_mail=null, draft=false, receivers=null) {
         this.#mails_list.hide();
-        this.#mail_reader.hide()
-        this.#mail_creator.show(reply_mail, draft);
+        this.#mail_reader.hide();
+        this.#mail_creator.show(reply_mail, receivers);
     }
 
 
@@ -498,10 +498,12 @@ class MailCreater {
     }
 
 
-    show(mail=null) {
+    show(mail=null, receivers=null) {
         this.reply_mail = mail;
         if (this.reply_mail)
             this.#add_reply_attrs();
+        if (receivers)
+            this.receivers.value = receivers;
         this.block.style.display = 'flex';
     }
 

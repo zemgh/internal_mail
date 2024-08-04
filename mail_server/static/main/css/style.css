@@ -9,28 +9,3 @@ div.page{
     display: flex;
     gap: 10px;
 }
-
-
-/*    Контакты    */
-
-div.contacts{
-    display: flex;
-    flex-direction: column;
-    width: 20%;
-    height: 100px;
-    gap: 10px;
-}
-
-div.contacts_options{
-    width: 100%;
-    background-color: gray;
-}
-
-div.contacts_list{
-    width: 100%;
-    background-color: gray;
-}
-div.contacts_user{
-    width: 100%;
-    background-color: gray;
-}

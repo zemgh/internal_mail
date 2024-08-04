@@ -24,6 +24,13 @@ class MailsManager {
     }
 
 
+    get_new_mail_form(receivers=null) {
+        this.current_block = this.ReceivedBlock;
+        this.show_received();
+        this.current_block.create_mail(null, false, receivers);
+    }
+
+
     show_received() {
         this.show_mails_block(this.ReceivedBlock);
     }
@@ -61,7 +68,7 @@ class MailsManager {
         }
         if (options)
             Object.assign(data, options);
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
     send_filter(type, options) {
@@ -70,7 +77,7 @@ class MailsManager {
             'filter_type': type,
             'filter_options' : options
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -81,7 +88,7 @@ class MailsManager {
             'subject': subject,
             'message': message
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -92,7 +99,7 @@ class MailsManager {
             'subject': subject,
             'message': message
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -104,7 +111,7 @@ class MailsManager {
             'subject': subject,
             'message': message
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -116,7 +123,7 @@ class MailsManager {
             'subject': subject,
             'message': message
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -125,7 +132,7 @@ class MailsManager {
             'type': 'delete_mails',
             'mails_list': id_list
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -134,7 +141,7 @@ class MailsManager {
             'type': 'delete_drafts',
             'drafts_list': id_list
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -143,7 +150,7 @@ class MailsManager {
             'type': 'recovery_mails',
             'mails_list': id_list
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -152,7 +159,7 @@ class MailsManager {
             'type': 'read_mails',
             'mails_list': id_list
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 
@@ -160,7 +167,7 @@ class MailsManager {
         let data = {
             'type': 'create_test_mail',
         }
-        CONNECTION.send(data);
+        CONNECTION_MANAGER.send(data);
     }
 
 

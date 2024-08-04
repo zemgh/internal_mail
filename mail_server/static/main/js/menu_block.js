@@ -1,8 +1,6 @@
 let new_mail = document.querySelector('.new_mail_button');
 new_mail.addEventListener('click', () => {
-    MAILS_MANAGER.current_block = MAILS_MANAGER.ReceivedBlock;
-    MAILS_MANAGER.show_received();
-    MAILS_MANAGER.current_block.create_mail();
+    MAILS_MANAGER.get_new_mail_form();
 })
 
 

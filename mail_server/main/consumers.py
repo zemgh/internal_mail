@@ -12,6 +12,9 @@ User = get_user_model()
 
 class MainConsumer(WebsocketConsumer):
     user = None
+    contacts = None
+    contacts_list = None
+
     mail = Mail
     mail_serializer = MailSerializer
     draft = DraftMail
@@ -26,9 +29,7 @@ class MainConsumer(WebsocketConsumer):
 
     def connect(self):
         self.accept()
-        self.user = self.scope['user'].__dict__['_wrapped']
-        self.user.channel = self.channel_name
-        self.user.save(update_fields=['channel'])
+        self.init_user()
         print(f'\nuser <{self.user}> connected at', datetime.now().strftime('%H:%M:%S'), f'\nchannel name: {self.channel_name}\n')
 
 
@@ -46,6 +47,14 @@ class MainConsumer(WebsocketConsumer):
         self.user.channel = None
         self.user.save(update_fields=['channel'])
         print(f'disconnecting by {self.user}: ', code)
+
+
+    def init_user(self):
+        self.user = self.scope['user'].__dict__['_wrapped']
+        self.contacts = self.user.contacts.all()
+        self.contacts_list = list(sorted(self.contacts.values_list('username', flat=True)))
+        self.user.channel = self.channel_name
+        self.user.save(update_fields=['channel'])
 
 
     def send_mails(self, methods=None, **kwargs):
@@ -155,6 +164,7 @@ class MainConsumer(WebsocketConsumer):
     def init(self, data):
         self.mails_per_page_default = data['mails_per_page']
         self.send_mails()
+        self.send_contacts()
 
 
     def get_mails(self, data):
@@ -263,6 +273,44 @@ class MainConsumer(WebsocketConsumer):
 
         self.send_mails(methods=[self.send_drafts])
 
+
+    def send_contacts(self, add=False):
+        data = {
+            'type': 'get_contacts',
+            'contacts': self.contacts_list
+        }
+        if add:
+            data['add'] = True
+        contacts_data = json.dumps(data)
+        self.send(contacts_data)
+
+
+    def add_user(self, data):
+        validate = self.validate_receivers([data['username'], ])
+
+        if validate != 'correct':
+            return self.send_error(validate)
+
+        if data['username'] in self.contacts_list:
+            return self.send_error('Этот пользователь уже в контактах!')
+
+        user = User.objects.get(username=data['username'])
+        self.user.contacts.add(user)
+        self.user.save()
+        self.contacts = self.user.contacts.all()
+        self.contacts_list = list(sorted(self.contacts.values_list('username', flat=True)))
+
+        self.send_contacts(add=True)
+
+
+    def remove_user(self, data):
+        user = User.objects.get(username=data['username'])
+        self.user.contacts.remove(user)
+        self.user.save()
+        self.contacts = self.user.contacts.all()
+        self.contacts_list.remove(user.username)
+
+        self.send_contacts()
 
     def signals_handler(self, message, **kwargs):
         methods = []

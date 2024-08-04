@@ -1,8 +1,28 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'main/css/contacts.css' %}">
+
+
+
 <div class="contacts">
-    <div class="contacts_options">{{ user }}</div>
-    <a href="{% url 'logout' %}">logout</a>
+    <div class="contacts_user">
+        <div>{{ user }}</div>
+        <div><a href="{% url 'logout' %}">Выйти</a></div>
+    </div>
+
+    Контакты:
+
+    <div class="contacts_block">
+        <div class="contacts_list" id="contacts_list"></div>
+    </div>
+
+    <div class="contacts_add">
+        <input class="contacts_add_input" id="add_input">
+        <button class="contacts_add_button" id="add_button">Добавить</button>
+    </div>
+
     <button id="test_mail">Тестовое письмо</button>
+
 </div>
 
-{% load static %}
-<script src="{% static 'main/js/contacts.js' %}"></script>
+
+<script src="{% static 'main/js/contacts_block.js' %}"></script>

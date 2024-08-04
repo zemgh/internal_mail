@@ -216,12 +216,26 @@ function ElementsManagerClass () {
         return this.combine(line, [label, input]);
     }
 
+    this.create_contacts_user_line = function() {
+        return this.create_base_node('div', {className: 'contacts_list_line'});
+    }
+
+    this.create_contacts_context_menu = function() {
+        let menu = this.create_base_node('div', {className: 'contacts_list_line_context_menu', id: 'contact_menu'});
+        let option_1 = this.create_base_node('div', {innerText: 'Написать', id: 'op_1_mail', className: 'contacts_list_line_context_menu_option'});
+        let option_2 = this.create_base_node('div', {innerText: 'Удалить', id: 'op_1_del', className: 'contacts_list_line_context_menu_option'});
+        let option_3 = this.create_base_node('div', {innerText: 'Отмена', id: 'op_1_close', className: 'contacts_list_line_context_menu_option'});
+        return this.combine(menu, [option_1, option_2, option_3]);
+    }
+
     this.samples = {
         mails_block: this.create_mails_block(),
         mails_list: this.create_mails_list(),
         mails_line: this.create_mails_line(),
         mails_line_with_checkbox: this.create_mails_line(true),
         more_button: this.create_more_button(),
-        filter: this.create_filter_block()
+        filter: this.create_filter_block(),
+        contacts_line: this.create_contacts_user_line(),
+        context_menu: this.create_contacts_context_menu()
     }
 }

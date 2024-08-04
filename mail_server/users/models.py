@@ -67,11 +67,7 @@ class User(AbstractBaseUser):
     last_name = models.CharField(max_length=30, validators=[UserValidators.validate_names])
     secret_word = models.CharField(max_length=64, validators=[UserValidators.validate_secret_word])
 
-    STATUS_CHOICES = (
-        (0, 'offline'),
-        (1, 'online')
-    )
-    status = models.BooleanField(choices=STATUS_CHOICES, default=0)
+    contacts = models.ManyToManyField('User')
     channel = models.CharField(max_length=100, null=True, blank=True)
 
     objects = CustomUserManager()

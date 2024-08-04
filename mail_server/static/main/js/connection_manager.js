@@ -18,6 +18,12 @@ class ConnectionManager {
                         MAILS_MANAGER.handle_command(message.command);
                     break;
 
+                case 'get_contacts':
+                    CONTACTS_MANAGER.create_users_list(message.contacts);
+                    if (message.add)
+                        CONTACTS_MANAGER.clear_input();
+                    break;
+
                 case 'command': MAILS_MANAGER.handle_command(message.command); break
 
                 case 'error': MAILS_MANAGER.raise_alert_error(message['error']); break;
