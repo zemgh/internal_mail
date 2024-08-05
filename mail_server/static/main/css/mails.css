@@ -239,11 +239,18 @@ div.create_line{
     display: flex;
     gap: 10px;
 }
+
 div.create_label{
     width: 8%;
 }
 
-input.create_receivers_subject{
+div.create_delayed_option_line{
+    display: none;
+    flex-direction: row;
+    gap: 10px;
+}
+
+input.create_receivers_subject, input.delayed_options_datetime{
     background-color: wheat;
     box-sizing: border-box;
     border: 0;

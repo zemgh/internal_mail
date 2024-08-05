@@ -6,6 +6,8 @@ class MailsBlock{
 
     mails_per_page_multiplier = 1;
 
+    wait = false;
+
     #MAILS = document.querySelector('.mails');
     #block = ElementsManager.samples.mails_block.cloneNode(true);
 
@@ -73,7 +75,16 @@ class MailsBlock{
 
 
     send_mail(receivers, subject, message) {
-        MAILS_MANAGER.send_mail(receivers, subject, message);
+        if (!this.wait) {
+            MAILS_MANAGER.send_mail(receivers, subject, message);
+            this.wait = true;
+        }
+    }
+
+
+    send_delayed_mail(receivers, subject, message, date, time) {
+        // time = time + ':00.0'
+        MAILS_MANAGER.send_delayed_mail(receivers, subject, message, date, time)
     }
 
 
@@ -88,7 +99,10 @@ class MailsBlock{
 
 
     convert_to_mail(id, receivers, subject, message) {
-        MAILS_MANAGER.convert_to_mail(id, receivers, subject, message);
+        if (!this.wait) {
+            MAILS_MANAGER.convert_to_mail(id, receivers, subject, message);
+            this.wait = true;
+        }
     }
 
 
@@ -487,14 +501,21 @@ class MailViewer {
 
 
 class MailCreater {
-    result;
+
+    delayed_options_display = false;
+
     constructor(parent) {
         this.parent = parent;
         this.block = ElementsManager.create_new_mail_form(this.parent.type)
         this.receivers = this.block.querySelector('#receivers');
         this.subject = this.block.querySelector('#subject');
         this.message = this.block.querySelector('#message');
+        this.delayed = this.block.querySelector('#delayed');
+        this.delayed_options = this.block.querySelector('#delayed_options');
+        this.date = this.block.querySelector('#delayed_date');
+        this.time = this.block.querySelector('#delayed_time');
         this.#add_buttons_events();
+        this.#add_delayed_event();
     }
 
 
@@ -542,6 +563,7 @@ class MailCreater {
     #clear_form() {
         this.reply_mail = null;
         this.#clear_reply_attrs();
+        this.#delayed_hide();
     }
 
 
@@ -592,18 +614,63 @@ class MailCreater {
     }
 
 
+    #add_delayed_event() {
+        this.delayed.addEventListener('click', () => {
+            if (this.delayed_options_display)
+                this.#delayed_hide();
+            else
+                this.#delayed_show();
+        })
+    }
+
+    #delayed_show() {
+        this.#set_datetime();
+        this.delayed_options.style.display = 'flex';
+        this.delayed_options_display = true;
+    }
+
+
+    #delayed_hide() {
+        this.delayed_options.style.display = 'none';
+        this.delayed_options_display = false;
+        if (this.delayed.checked)
+            this.delayed.checked = false
+    }
+
+
+    #set_datetime() {
+        this.date.value = new Date().toISOString().split('T')[0];
+        this.date.min = new Date().toISOString().split('T')[0];
+
+        this.time.value = new Date().toISOString().substring(11,16);
+    }
+
+
     #check_data_and_send(receivers, subject, message, convert_to_mail=false, id=null) {
         if (!receivers || !subject || !message)
             alert('Все поля должны быть заполнены!');
+        if (this.delayed_options_display)
+            if (this.#check_datetime() === false)
+                alert('Время должно быть больше текущего!');
         else {
             if (convert_to_mail)
                 this.parent.convert_to_mail(id, receivers, subject, message);
+            else if (this.delayed_options_display)
+                this.parent.send_delayed_mail(receivers, subject, message, this.date.value, this.time.value)
             else
                 this.parent.send_mail(receivers, subject, message);
         }
     }
 
+    #check_datetime() {
+        let time = Number(this.time.value.replace(':', ''));
+        let current_time = Number(new Date().toISOString().substring(11,16).replace(':', ''));
 
+        if (this.date.value === new Date().toISOString().split('T')[0])
+            if (time <= current_time)
+                return false;
+        return true;
+    }
 }
 
 
@@ -623,7 +690,6 @@ class Filter {
     constructor(parent, show_button) {
         this.parent = parent;
         this.show_button = show_button;
-        this.default_show_button = this.show_button.cloneNode(true);
 
         this.#set_min_max_dates_for_input();
         this.#add_date_inputs_events();
@@ -647,17 +713,19 @@ class Filter {
     }
 
 
-    #add_show_button_event(self) {
+    #add_show_button_event(obj) {
         function hide_event() {
-            self.hide();
+            obj.hide();
+            obj.parent.send_filter({'reset': true})
         }
 
         function show_event() {
-            self.show();
+            obj.show();
         }
 
-        if (this.block_show === true)
+        if (this.block_show === true) {
             this.show_button.addEventListener('click', hide_event, {once: true});
+        }
 
         if (this.block_show === false)
             this.show_button.addEventListener('click', show_event, {once: true});

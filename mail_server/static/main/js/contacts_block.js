@@ -14,6 +14,8 @@ class ContactsManager {
     context_menu_state = 0;
     selected_user = null;
 
+    wait = false;
+
     constructor() {
         this.add_button.addEventListener('click', () => {
             let username = this.add_input.value;
@@ -60,11 +62,14 @@ class ContactsManager {
     }
 
     #add_user(username) {
-        let data = {
-            'type': 'add_user',
-            'username': username
+        if (!this.wait) {
+            let data = {
+                'type': 'add_user',
+                'username': username
+            }
+            this.wait = true;
+            CONNECTION_MANAGER.send(data);
         }
-        CONNECTION_MANAGER.send(data);
     }
 
     #remove_user(username) {

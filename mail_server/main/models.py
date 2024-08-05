@@ -29,7 +29,6 @@ class BaseMailsModel:
         return data
 
 
-
 class Mail(models.Model, BaseMailsModel):
     class Meta:
         ordering = ['-created']
@@ -42,10 +41,15 @@ class Mail(models.Model, BaseMailsModel):
     answer_for = models.ForeignKey('Mail', on_delete=models.DO_NOTHING, null=True, blank=True)
     deleted = models.BooleanField(default=False)
     read = models.BooleanField(default=False)
-    deferred = models.BooleanField(default=False)
-    deferred_datetime = models.DateTimeField(null=True, blank=True)
 
 
+class DelayedMail(models.Model, BaseMailsModel):
+    subject = models.CharField(max_length=50)
+    message = models.TextField()
+    sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='delayed_mails')
+    receivers = models.ManyToManyField(User)
+    created = models.DateTimeField(auto_now_add=True)
+    send_datetime = models.DateTimeField()
 
 
 class DraftMail(models.Model, BaseMailsModel):

@@ -20,8 +20,10 @@ class ConnectionManager {
 
                 case 'get_contacts':
                     CONTACTS_MANAGER.create_users_list(message.contacts);
-                    if (message.add)
+                    if (message.add) {
                         CONTACTS_MANAGER.clear_input();
+                        CONTACTS_MANAGER.wait = false;
+                    }
                     break;
 
                 case 'command': MAILS_MANAGER.handle_command(message.command); break

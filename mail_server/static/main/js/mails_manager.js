@@ -92,6 +92,19 @@ class MailsManager {
     }
 
 
+    send_delayed_mail(receivers, subject, message, date, time) {
+        let data = {
+            'type': 'create_delayed_mail',
+            'receivers': receivers,
+            'subject': subject,
+            'message': message,
+            'date': date,
+            'time': time
+        }
+        CONNECTION_MANAGER.send(data);
+    }
+
+
     send_draft(receivers, subject, message) {
         let data = {
             'type': 'create_draft',
@@ -173,13 +186,18 @@ class MailsManager {
 
     handle_command(command) {
         switch(command) {
-            case 'close_create_form': this.current_block.close_create_mail_form(); break;
+            case 'close_create_form':
+                this.current_block.close_create_mail_form();
+                this.current_block.wait = false;
+                break;
         }
     }
 
 
     raise_alert_error(text) {
+        this.current_block.wait = false;
         alert(text);
+
     }
 
 

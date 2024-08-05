@@ -4,8 +4,10 @@ from datetime import datetime, date, timedelta
 from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth import get_user_model
 
-from main.models import Mail, DraftMail
+from main.models import Mail, DraftMail, DelayedMail
 from main.serializers import MailSerializer, DraftSerializer
+
+from time import sleep
 
 User = get_user_model()
 
@@ -19,6 +21,7 @@ class MainConsumer(WebsocketConsumer):
     mail_serializer = MailSerializer
     draft = DraftMail
     draft_serializer = DraftSerializer
+    delayed_mail = DelayedMail
 
     mails_per_page_default = None
     mails_per_page_current = None
@@ -34,6 +37,7 @@ class MainConsumer(WebsocketConsumer):
 
 
     def receive(self, text_data=None, bytes_data=None):
+        sleep(0.5)
         data = json.loads(text_data)
         print(f'income from {self.user}:', data)
 
@@ -184,8 +188,12 @@ class MainConsumer(WebsocketConsumer):
 
 
     def filter(self, data):
-        self.filter_type = data['filter_type']
-        self.filter_options = data['filter_options']
+        if data.get('reset'):
+            self.filter_type = None
+            self.filter_options = None
+        else:
+            self.filter_type = data['filter_type']
+            self.filter_options = data['filter_options']
 
         method = getattr(self, f'send_{data['filter_type']}')
         self.send_mails(methods=[method])
@@ -227,6 +235,21 @@ class MainConsumer(WebsocketConsumer):
         self.mail.objects.filter(id__in=id_list).update(read=True)
 
         self.send_mails(methods=[self.send_received])
+
+
+    def create_delayed_mail(self, data):
+        dt = f'{data["date"]} {data["time"]}'
+        dt = datetime.strptime(dt, '%Y-%m-%d %H:%M')
+        delayed_mail = self.delayed_mail.objects.create(
+            subject=data['subject'],
+            message=data['message'],
+            sender=self.user,
+            send_datetime=dt
+        )
+        receivers = User.objects.filter(username__in=data['receivers'])
+        delayed_mail.receivers.set(receivers)
+
+        self.send_command('close_create_form')
 
 
     def create_draft(self, data):
