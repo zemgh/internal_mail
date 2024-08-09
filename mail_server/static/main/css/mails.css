@@ -43,6 +43,7 @@ input.filter_input{
     border: 0;
     outline:none;
     border-radius: 5px;
+    min-width: 100px;
 }
 
 div.filter_block{
@@ -70,6 +71,27 @@ button.filter_button:hover{
     background-color: white;
 }
 
+
+div.filter_show, div.filter_hide{
+    border: 0;
+    font-size: 16px;
+    background-color: green;
+    border-radius: 5px;
+    padding: 5px 10px 5px 10px;
+    user-select: none;
+}
+
+div.filter_show{
+    color: white;
+}
+
+div.filter_show:hover{
+    background-color: dodgerblue;
+}
+
+div.filter_hide:hover{
+    background-color: white;
+}
 
 
 /*    Письма-Опции    */

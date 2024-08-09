@@ -187,7 +187,7 @@ function ElementsManagerClass () {
 
         if (['send', 'drafts'].includes(type) === false) {
             let filter_block = this.create_base_node('div', {className: 'filter_block'});
-            let filter = this.create_options_button_for_list('show_filter', 'Фильтр', true);
+            let filter = this.create_base_node('div', {id: 'show_filter', className: 'filter_hide', innerText: 'Фильтр'})
             filter_block.appendChild(filter);
             options_block.appendChild(filter_block);
         }

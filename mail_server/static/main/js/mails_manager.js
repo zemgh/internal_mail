@@ -183,6 +183,13 @@ class MailsManager {
         CONNECTION_MANAGER.send(data);
     }
 
+    get_test_delayed_mail() {
+                let data = {
+            'type': 'create_test_delayed_mail',
+        }
+        CONNECTION_MANAGER.send(data);
+    }
+
 
     handle_command(command) {
         switch(command) {

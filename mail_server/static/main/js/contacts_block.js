@@ -1,5 +1,7 @@
-let test_button = document.querySelector('#test_mail');
-test_button.addEventListener('click', (event) => MAILS_MANAGER.get_test_mail())
+let test_button_1 = document.querySelector('#test_mail');
+let test_button_2 = document.querySelector('#test_delayed_mail');
+test_button_1.addEventListener('click', (event) => MAILS_MANAGER.get_test_mail())
+test_button_2.addEventListener('click', (event) => MAILS_MANAGER.get_test_delayed_mail())
 
 
 class ContactsManager {

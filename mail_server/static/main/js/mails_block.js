@@ -83,7 +83,6 @@ class MailsBlock{
 
 
     send_delayed_mail(receivers, subject, message, date, time) {
-        // time = time + ':00.0'
         MAILS_MANAGER.send_delayed_mail(receivers, subject, message, date, time)
     }
 
@@ -647,19 +646,20 @@ class MailCreater {
 
 
     #check_data_and_send(receivers, subject, message, convert_to_mail=false, id=null) {
-        if (!receivers || !subject || !message)
-            alert('Все поля должны быть заполнены!');
-        if (this.delayed_options_display)
+        if (!receivers[0] || !subject || !message)
+            return alert('Все поля должны быть заполнены!');
+
+        if (this.delayed_options_display) {
             if (this.#check_datetime() === false)
-                alert('Время должно быть больше текущего!');
-        else {
-            if (convert_to_mail)
-                this.parent.convert_to_mail(id, receivers, subject, message);
-            else if (this.delayed_options_display)
-                this.parent.send_delayed_mail(receivers, subject, message, this.date.value, this.time.value)
-            else
-                this.parent.send_mail(receivers, subject, message);
+                return alert('Время должно быть больше текущего!');
         }
+
+        if (convert_to_mail)
+            this.parent.convert_to_mail(id, receivers, subject, message);
+        else if (this.delayed_options_display)
+            this.parent.send_delayed_mail(receivers, subject, message, this.date.value, this.time.value)
+        else
+            this.parent.send_mail(receivers, subject, message);
     }
 
     #check_datetime() {
@@ -701,7 +701,8 @@ class Filter {
         this.block.style.display = 'flex';
         this.block_show = true;
         this.#set_default_date();
-        this.#add_show_button_event(this)
+        this.#add_show_button_event(this);
+        this.show_button.className = 'filter_show';
     }
 
 
@@ -709,7 +710,8 @@ class Filter {
         this.block.style.display = 'None';
         this.block_show = false;
         this.#clear();
-        this.#add_show_button_event(this)
+        this.#add_show_button_event(this);
+        this.show_button.className = 'filter_hide';
     }
 
 

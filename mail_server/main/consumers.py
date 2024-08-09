@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth import get_user_model
@@ -8,6 +8,8 @@ from main.models import Mail, DraftMail, DelayedMail
 from main.serializers import MailSerializer, DraftSerializer
 
 from time import sleep
+
+from users.tasks import make_mail_from_delayed_mail
 
 User = get_user_model()
 
@@ -24,8 +26,8 @@ class MainConsumer(WebsocketConsumer):
     delayed_mail = DelayedMail
 
     mails_per_page_default = None
-    mails_per_page_current = None
-    mails_per_page_type = None
+    mails_type = None
+    mails_number = None
 
     filter_type = None
     _filter_options = None
@@ -127,8 +129,8 @@ class MainConsumer(WebsocketConsumer):
 
 
     def get_number_of_mails(self, mails_type):
-        if self.mails_per_page_type == mails_type:
-            return self.mails_per_page_current + self.mails_per_page_default + 1
+        if self.mails_type == mails_type:
+            return self.mails_number + self.mails_per_page_default + 1
         return self.mails_per_page_default * 2 + 1
 
 
@@ -175,14 +177,14 @@ class MainConsumer(WebsocketConsumer):
         methods = []
         for k, v in data.items():
             if v != 'default':
-                setattr(self, 'mails_per_page_type', k)
-                setattr(self, 'mails_per_page_current', v)
+                setattr(self, 'mails_type', k)
+                setattr(self, 'mails_number', v)
                 method = getattr(self, 'send_' + k)
                 methods.append(method)
 
             elif v == 'default':
-                setattr(self, 'mails_per_page_current', None)
-                setattr(self, 'mails_per_page_type', None)
+                setattr(self, 'mails_number', None)
+                setattr(self, 'mails_type', None)
 
         self.send_mails(methods=methods)
 
@@ -248,6 +250,9 @@ class MainConsumer(WebsocketConsumer):
         )
         receivers = User.objects.filter(username__in=data['receivers'])
         delayed_mail.receivers.set(receivers)
+
+        print('delayed_mail')
+        make_mail_from_delayed_mail.apply_async(countdown=10.0, kwargs={'delayed_mail_id': delayed_mail.id})
 
         self.send_command('close_create_form')
 
@@ -373,3 +378,17 @@ class MainConsumer(WebsocketConsumer):
         mail.receivers.add(self.user)
         mail.save()
         print(f'sended test mail to {', '.join([user.username for user in mail.receivers.all()])}')
+
+    def create_test_delayed_mail(self, useless_data):
+        delayed_mail = self.delayed_mail.objects.create(
+            subject='test delayed mail',
+            message='This is a test delayed mail',
+            sender=self.user,
+            send_datetime=datetime.now()
+        )
+
+        delayed_mail.receivers.add(self.user)
+        delayed_mail.save()
+
+        make_mail_from_delayed_mail.apply_async(countdown=10.0, kwargs={'delayed_mail_id': delayed_mail.id})
+        print(f'created test delayed mail for {', '.join([user.username for user in delayed_mail.receivers.all()])}')
