@@ -35,13 +35,12 @@ class MainConsumer(WebsocketConsumer):
     def connect(self):
         self.accept()
         self.init_user()
-        print(f'\nuser <{self.user}> connected at', datetime.now().strftime('%H:%M:%S'), f'\nchannel name: {self.channel_name}\n')
+        print(f'\n[{self.get_time()}] user <{self.user}> connected, channel name: {self.channel_name}\n')
 
 
     def receive(self, text_data=None, bytes_data=None):
-        sleep(0.5)
         data = json.loads(text_data)
-        print(f'income from {self.user}:', data)
+        print(f'[{self.get_time()}] income from {self.user}:', data)
 
         request_type = data.get('type')
         del data['type']
@@ -52,7 +51,7 @@ class MainConsumer(WebsocketConsumer):
     def disconnect(self, code):
         self.user.channel = None
         self.user.save(update_fields=['channel'])
-        print(f'disconnecting by {self.user}: ', code)
+        print(f'[{self.get_time()}] disconnecting by {self.user}: ', code)
 
 
     def init_user(self):
@@ -79,7 +78,7 @@ class MainConsumer(WebsocketConsumer):
             data[k] = v
 
         self.send(json.dumps(data))
-        print(f'send to {self.user}:', data)
+        print(f'[{self.get_time()}] send to {self.user}:', data)
 
 
     def send_all_mails(self):
@@ -240,19 +239,20 @@ class MainConsumer(WebsocketConsumer):
 
 
     def create_delayed_mail(self, data):
-        dt = f'{data["date"]} {data["time"]}'
+        dt = data['dt']
         dt = datetime.strptime(dt, '%Y-%m-%d %H:%M')
+        print(dt)
         delayed_mail = self.delayed_mail.objects.create(
             subject=data['subject'],
             message=data['message'],
             sender=self.user,
             send_datetime=dt
         )
+
         receivers = User.objects.filter(username__in=data['receivers'])
         delayed_mail.receivers.set(receivers)
 
-        print('delayed_mail')
-        make_mail_from_delayed_mail.apply_async(countdown=10.0, kwargs={'delayed_mail_id': delayed_mail.id})
+        make_mail_from_delayed_mail.apply_async(eta=dt, kwargs={'delayed_mail_id': delayed_mail.id})
 
         self.send_command('close_create_form')
 
@@ -359,6 +359,11 @@ class MainConsumer(WebsocketConsumer):
             return f'Пользователей {', '.join(validate_result)} не существует!'
 
 
+    @staticmethod
+    def get_time():
+        return datetime.strftime(datetime.now(), '%H:%M:%S')
+
+
     def create_test_mail(self, useless_data):
         try:
             user = User.objects.get(username='test_user')
@@ -380,15 +385,16 @@ class MainConsumer(WebsocketConsumer):
         print(f'sended test mail to {', '.join([user.username for user in mail.receivers.all()])}')
 
     def create_test_delayed_mail(self, useless_data):
+        time = datetime.utcnow() + timedelta(seconds=10)
         delayed_mail = self.delayed_mail.objects.create(
             subject='test delayed mail',
             message='This is a test delayed mail',
             sender=self.user,
-            send_datetime=datetime.now()
+            send_datetime=time
         )
 
         delayed_mail.receivers.add(self.user)
         delayed_mail.save()
 
-        make_mail_from_delayed_mail.apply_async(countdown=10.0, kwargs={'delayed_mail_id': delayed_mail.id})
+        make_mail_from_delayed_mail.apply_async(eta=time, kwargs={'delayed_mail_id': delayed_mail.id})
         print(f'created test delayed mail for {', '.join([user.username for user in delayed_mail.receivers.all()])}')

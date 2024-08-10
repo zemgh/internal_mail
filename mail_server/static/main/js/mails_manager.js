@@ -92,14 +92,13 @@ class MailsManager {
     }
 
 
-    send_delayed_mail(receivers, subject, message, date, time) {
+    send_delayed_mail(receivers, subject, message, dt) {
         let data = {
             'type': 'create_delayed_mail',
             'receivers': receivers,
             'subject': subject,
             'message': message,
-            'date': date,
-            'time': time
+            'dt': dt
         }
         CONNECTION_MANAGER.send(data);
     }

@@ -16,4 +16,4 @@ def make_mail_from_delayed_mail(**kwargs):
 
     mail.save()
     delayed_mail.delete()
-    print(3)
+    print('task completed')
