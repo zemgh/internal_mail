@@ -24,10 +24,10 @@ class MailsManager {
     }
 
 
-    get_new_mail_form(receivers=null) {
+    get_new_mail_form(receiver=null) {
         this.current_block = this.ReceivedBlock;
         this.show_received();
-        this.current_block.create_mail(null, false, receivers);
+        this.current_block.create_mail(null, false, receiver);
     }
 
 
@@ -81,10 +81,10 @@ class MailsManager {
     }
 
 
-    send_mail(receivers, subject, message) {
+    send_mail(receiver, subject, message) {
         let data = {
             'type': 'create_mail',
-            'receivers': receivers,
+            'receiver': receiver,
             'subject': subject,
             'message': message
         }
@@ -92,10 +92,10 @@ class MailsManager {
     }
 
 
-    send_delayed_mail(receivers, subject, message, dt) {
+    send_delayed_mail(receiver, subject, message, dt) {
         let data = {
             'type': 'create_delayed_mail',
-            'receivers': receivers,
+            'receiver': receiver,
             'subject': subject,
             'message': message,
             'dt': dt
@@ -104,10 +104,10 @@ class MailsManager {
     }
 
 
-    send_draft(receivers, subject, message) {
+    send_draft(receiver, subject, message) {
         let data = {
             'type': 'create_draft',
-            'receivers': receivers,
+            'receiver': receiver,
             'subject': subject,
             'message': message
         }
@@ -115,11 +115,11 @@ class MailsManager {
     }
 
 
-    save_draft(id, receivers, subject, message) {
+    save_draft(id, receiver, subject, message) {
         let data = {
             'type': 'save_draft',
             'id': id,
-            'receivers': receivers,
+            'receiver': receiver,
             'subject': subject,
             'message': message
         }
@@ -127,11 +127,11 @@ class MailsManager {
     }
 
 
-    convert_to_mail(id, receivers, subject, message) {
+    convert_to_mail(id, receiver, subject, message) {
         let data = {
             'type': 'convert_to_mail',
             'id': id,
-            'receivers': receivers,
+            'receiver': receiver,
             'subject': subject,
             'message': message
         }
@@ -174,23 +174,7 @@ class MailsManager {
         CONNECTION_MANAGER.send(data);
     }
 
-
-    get_test_mail(){
-        let data = {
-            'type': 'create_test_mail',
-        }
-        CONNECTION_MANAGER.send(data);
-    }
-
-    get_test_delayed_mail() {
-                let data = {
-            'type': 'create_test_delayed_mail',
-        }
-        CONNECTION_MANAGER.send(data);
-    }
-
-
-    handle_command(command) {
+        handle_command(command) {
         switch(command) {
             case 'close_create_form':
                 this.current_block.close_create_mail_form();
@@ -204,6 +188,28 @@ class MailsManager {
         this.current_block.wait = false;
         alert(text);
 
+    }
+
+
+    get_test_mail(){
+        let data = {
+            'type': 'create_test_mail',
+        }
+        CONNECTION_MANAGER.send(data);
+    }
+
+
+    get_test_delayed_mail() {
+        let data = {
+            'type': 'create_test_delayed_mail',
+        }
+        CONNECTION_MANAGER.send(data);
+    }
+
+
+    activate_demo_mod() {
+        window.demo_mod = true;
+        document.querySelector('#test_block').style.display = 'flex';
     }
 
 

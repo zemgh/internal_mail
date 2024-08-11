@@ -7,9 +7,7 @@ from django.contrib.auth import get_user_model
 from main.models import Mail, DraftMail, DelayedMail
 from main.serializers import MailSerializer, DraftSerializer
 
-from time import sleep
-
-from users.tasks import make_mail_from_delayed_mail
+from main.tasks import make_mail_from_delayed_mail
 
 User = get_user_model()
 
@@ -17,7 +15,6 @@ User = get_user_model()
 class MainConsumer(WebsocketConsumer):
     user = None
     contacts = None
-    contacts_list = None
 
     mail = Mail
     mail_serializer = MailSerializer
@@ -32,35 +29,36 @@ class MainConsumer(WebsocketConsumer):
     filter_type = None
     _filter_options = None
 
+    demo_mod = False
+    test_user = None
+
     def connect(self):
         self.accept()
         self.init_user()
-        print(f'\n[{self.get_time()}] user <{self.user}> connected, channel name: {self.channel_name}\n')
-
+        self.printlog(f'User <{self.user}> connected. Channel name: {self.channel_name}')
 
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
-        print(f'[{self.get_time()}] income from {self.user}:', data)
+        self.printlog(f'Data received from <{self.user}>: {data}')
 
         request_type = data.get('type')
         del data['type']
         method = getattr(self, request_type)
         method(data)
 
-
     def disconnect(self, code):
         self.user.channel = None
         self.user.save(update_fields=['channel'])
-        print(f'[{self.get_time()}] disconnecting by {self.user}: ', code)
-
+        self.printlog(f'User <{self.user}> has disconnected. Code: {code}')
 
     def init_user(self):
         self.user = self.scope['user'].__dict__['_wrapped']
         self.contacts = self.user.contacts.all()
-        self.contacts_list = list(sorted(self.contacts.values_list('username', flat=True)))
+        if self.user.is_demo:
+            self.demo_mod = True
+            self.set_test_user()
         self.user.channel = self.channel_name
         self.user.save(update_fields=['channel'])
-
 
     def send_mails(self, methods=None, **kwargs):
         data = {
@@ -78,8 +76,7 @@ class MainConsumer(WebsocketConsumer):
             data[k] = v
 
         self.send(json.dumps(data))
-        print(f'[{self.get_time()}] send to {self.user}:', data)
-
+        self.printlog(f'Sent data to <{self.user}>: {data}')
 
     def send_all_mails(self):
         send_data = {}
@@ -87,7 +84,6 @@ class MainConsumer(WebsocketConsumer):
         for method in methods:
             send_data.update(method())
         return send_data
-
 
     def send_received(self):
         number_of_mails = self.get_number_of_mails('received')
@@ -102,14 +98,12 @@ class MainConsumer(WebsocketConsumer):
         send_data = {'received': mails_data, 'unread': unread_data}
         return send_data
 
-
     def send_sent(self):
         number_of_mails = self.get_number_of_mails('sent')
         sent_mails = self.user.sent_mails.all()[:number_of_mails]
         mails_data = self.mail_serializer.get_data_for_json(queryset=sent_mails)
         send_data = {'sent': mails_data}
         return send_data
-
 
     def send_deleted(self):
         number_of_mails = self.get_number_of_mails('deleted')
@@ -118,7 +112,6 @@ class MainConsumer(WebsocketConsumer):
         send_data = {'deleted': mails_data}
         return send_data
 
-
     def send_drafts(self):
         number_of_mails = self.get_number_of_mails('drafts')
         drafts = self.user.drafts.all()[:number_of_mails]
@@ -126,12 +119,10 @@ class MainConsumer(WebsocketConsumer):
         send_data = {'drafts': drafts_data}
         return send_data
 
-
     def get_number_of_mails(self, mails_type):
         if self.mails_type == mails_type:
             return self.mails_number + self.mails_per_page_default + 1
         return self.mails_per_page_default * 2 + 1
-
 
     @property
     def filter_options(self):
@@ -149,28 +140,29 @@ class MainConsumer(WebsocketConsumer):
                 fields['created__lte'] = datetime.strptime(v, '%Y-%m-%d') + timedelta(days=1)
         self._filter_options = fields
 
-
     def send_command(self, command):
         data = {
             'type': 'command',
             'command': command
         }
         self.send(json.dumps(data))
-        print('sent command:', command)
-
+        self.printlog(f'Sent command to <{self.user}>: {command}')
 
     def send_error(self, error):
         data = {
             'type': 'error',
             'error': error}
-        self.send(json.dumps(data))
 
+        self.printlog(f'Sent error to <{self.user}>: {data}')
+        self.send(json.dumps(data))
 
     def init(self, data):
         self.mails_per_page_default = data['mails_per_page']
-        self.send_mails()
+        if self.demo_mod:
+            self.send_mails(demo=True)
+        else:
+            self.send_mails()
         self.send_contacts()
-
 
     def get_mails(self, data):
         methods = []
@@ -187,7 +179,6 @@ class MainConsumer(WebsocketConsumer):
 
         self.send_mails(methods=methods)
 
-
     def filter(self, data):
         if data.get('reset'):
             self.filter_type = None
@@ -199,144 +190,147 @@ class MainConsumer(WebsocketConsumer):
         method = getattr(self, f'send_{data['filter_type']}')
         self.send_mails(methods=[method])
 
-
     def create_mail(self, data):
-        validate = self.validate_receivers(data['receivers'])
-        if validate != 'correct':
-            return self.send_error(validate)
+        receiver = self.validate_user(data['receiver'])
+        if not receiver:
+            return self.send_error('Пользователя не существует!')
 
-        mail = self.mail.objects.create(
+        self.mail.objects.create(
             sender=self.user,
+            receiver=receiver,
             subject=data['subject'],
             message=data['message']
         )
-        receivers = User.objects.filter(username__in=data['receivers'])
-        mail.receivers.set(receivers)
-        mail.save()
 
         self.send_command('close_create_form')
 
-
     def delete_mails(self, data):
         id_list = data['mails_list']
-        self.mail.objects.filter(id__in=id_list).update(deleted=True)
+        queryset = self.mail.objects.filter(id__in=id_list)
+        for mail in queryset:
+            if self.user != mail.receiver:
+                return self.printlog(f'Ошибка удаления письма! user={self.user} mail_id={mail.id}', warning=True)
+        queryset.update(deleted=True)
 
         self.send_mails(methods=[self.send_received, self.send_deleted])
-
 
     def recovery_mails(self, data):
         id_list = data['mails_list']
-        self.mail.objects.filter(id__in=id_list).update(deleted=False)
+        queryset = self.mail.objects.filter(id__in=id_list)
+        for mail in queryset:
+            if self.user != mail.receiver:
+                return self.printlog(f'Ошибка восстановления письма! user={self.user} mail_id={mail.id}', warning=True)
+        queryset.update(deleted=False)
 
         self.send_mails(methods=[self.send_received, self.send_deleted])
 
-
     def read_mails(self, data):
         id_list = data['mails_list']
-        self.mail.objects.filter(id__in=id_list).update(read=True)
+        queryset = self.mail.objects.filter(id__in=id_list)
+        for mail in queryset:
+            if self.user != mail.receiver:
+                return self.printlog(f'Ошибка чтения письма! user={self.user} mail_id={mail.id}', warning=True)
+        queryset.update(read=True)
 
         self.send_mails(methods=[self.send_received])
 
-
     def create_delayed_mail(self, data):
-        dt = data['dt']
-        dt = datetime.strptime(dt, '%Y-%m-%d %H:%M')
-        print(dt)
+        dt = datetime.strptime(data['dt'], '%Y-%m-%d %H:%M')
+        receiver = User.objects.get(username=data['receiver'])
         delayed_mail = self.delayed_mail.objects.create(
             subject=data['subject'],
             message=data['message'],
             sender=self.user,
+            receiver=receiver,
             send_datetime=dt
         )
-
-        receivers = User.objects.filter(username__in=data['receivers'])
-        delayed_mail.receivers.set(receivers)
 
         make_mail_from_delayed_mail.apply_async(eta=dt, kwargs={'delayed_mail_id': delayed_mail.id})
 
         self.send_command('close_create_form')
 
-
     def create_draft(self, data):
+        receiver = User.objects.get(username=data['receiver'])
         self.draft.objects.create(
             sender=self.user,
-            receivers=' '.join(data['receivers']),
+            receiver=receiver,
             subject=data['subject'],
             message=data['message']
         )
 
-
     def save_draft(self, data):
         draft = self.draft.objects.get(id=data['id'])
-        draft.receivers = ' '.join(data['receivers'])
+        draft.receiver = data['receiver']
         draft.subject = data['subject']
         draft.message = data['message']
         draft.save()
 
         self.send_mails(methods=[self.send_drafts])
 
-
     def convert_to_mail(self, data):
-        validate = self.validate_receivers(data['receivers'])
-        if validate != 'correct':
-            return self.send_error(validate)
+        receiver = self.validate_user(data['receiver'])
+        if not receiver:
+            return self.send_error('Такого пользователя не существует!')
 
-        mail = self.mail.objects.create(
+        self.mail.objects.create(
             sender=self.user,
+            receiver=receiver,
             subject=data['subject'],
             message=data['message']
         )
-        receivers = User.objects.filter(username__in=data['receivers'])
-        mail.receivers.set(receivers)
-        mail.save()
 
         self.draft.objects.get(id=data['id']).delete()
 
         self.send_mails(methods=[self.send_received, self.send_drafts], command='close_create_form')
 
-
     def delete_drafts(self, data):
         id_list = data['drafts_list']
-        self.draft.objects.filter(id__in=id_list).delete()
+        queryset = self.draft.objects.filter(id__in=id_list)
+        for draft in queryset:
+            if self.user != draft.sender:
+                return self.printlog(f'Ошибка удаления черновика! user={self.user} draft_id={draft.id}', warning=True)
 
+        queryset.delete()
         self.send_mails(methods=[self.send_drafts])
-
 
     def send_contacts(self, add=False):
         data = {
             'type': 'get_contacts',
-            'contacts': self.contacts_list
+            'contacts': [user.username for user in self.contacts]
         }
+
         if add:
             data['add'] = True
         contacts_data = json.dumps(data)
         self.send(contacts_data)
 
-
     def add_user(self, data):
-        validate = self.validate_receivers([data['username'], ])
+        user = self.validate_user(data['username'])
 
-        if validate != 'correct':
-            return self.send_error(validate)
+        if not user:
+            return self.send_error('Такого пользователя не существует!')
 
-        if data['username'] in self.contacts_list:
+        if user in self.contacts:
             return self.send_error('Этот пользователь уже в контактах!')
 
-        user = User.objects.get(username=data['username'])
         self.user.contacts.add(user)
         self.user.save()
         self.contacts = self.user.contacts.all()
-        self.contacts_list = list(sorted(self.contacts.values_list('username', flat=True)))
 
         self.send_contacts(add=True)
 
-
     def remove_user(self, data):
-        user = User.objects.get(username=data['username'])
+        user = self.validate_user(data['username'])
+
+        if not user:
+            return self.send_error('Такого пользователя не существует!')
+
+        if user not in self.contacts:
+            return self.send_error('Этот пользователь не в контактах!')
+
         self.user.contacts.remove(user)
         self.user.save()
         self.contacts = self.user.contacts.all()
-        self.contacts_list.remove(user.username)
 
         self.send_contacts()
 
@@ -346,55 +340,63 @@ class MainConsumer(WebsocketConsumer):
             methods.append(getattr(self, method))
         self.send_mails(methods=methods, **kwargs)
 
-
-    def validate_receivers(self, receivers):
-        users = User.objects.filter(username__in=receivers)
-        users_list = [user.username for user in users]
-        validate_result = list(set(receivers) - set(users_list))
-        if len(validate_result) == 0:
-            return 'correct'
-        elif len(validate_result) == 1:
-            return f'Пользователя {validate_result[0]} не существует!'
-        elif len(validate_result) > 1:
-            return f'Пользователей {', '.join(validate_result)} не существует!'
+    def validate_user(self, username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return False
 
 
     @staticmethod
-    def get_time():
-        return datetime.strftime(datetime.now(), '%H:%M:%S')
+    def printlog(text, warning=False):
+        time = datetime.strftime(datetime.now(), '%d-%m-%y %H:%M:%S')
+        warning_chars = '!' * 5
+        if warning:
+            print(f'{warning_chars}\n[{time}] {text}\n{warning_chars}')
+        else:
+            print(f'[{time}] {text}')
 
-
-    def create_test_mail(self, useless_data):
+    def set_test_user(self):
         try:
             user = User.objects.get(username='test_user')
         except User.DoesNotExist:
-            user = User.objects.create_user(
+            user = User.objects.create(
                 username='test_user',
                 first_name='Тестовый',
                 last_name='Юзвер',
                 secret_word='йцукен'
             )
+        self.test_user = user
+        if user not in self.contacts:
+            self.add_user({'username': user.username})
+
+
+    def create_test_mail(self, useless_data):
+        if not self.demo_mod:
+            return self.printlog(f'Демо режим не активирован! user={self.user}', warning=True)
 
         mail = self.mail.objects.create(
-            sender=user,
+            sender=self.test_user,
+            receiver=self.user,
             subject='test_mail',
             message='this is a test mail',
         )
-        mail.receivers.add(self.user)
-        mail.save()
-        print(f'sended test mail to {', '.join([user.username for user in mail.receivers.all()])}')
+
+        self.printlog(f'Created test mail for <{mail.receiver}>')
+
 
     def create_test_delayed_mail(self, useless_data):
+        if not self.demo_mod:
+            return self.printlog(f'Демо режим не активирован! user={self.user}', warning=True)
+
         time = datetime.utcnow() + timedelta(seconds=10)
         delayed_mail = self.delayed_mail.objects.create(
             subject='test delayed mail',
             message='This is a test delayed mail',
-            sender=self.user,
+            sender=self.test_user,
+            receiver=self.user,
             send_datetime=time
         )
 
-        delayed_mail.receivers.add(self.user)
-        delayed_mail.save()
-
         make_mail_from_delayed_mail.apply_async(eta=time, kwargs={'delayed_mail_id': delayed_mail.id})
-        print(f'created test delayed mail for {', '.join([user.username for user in delayed_mail.receivers.all()])}')
+        self.printlog(f'Created test delayed mail for <{delayed_mail.receiver}>')

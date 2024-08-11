@@ -3,19 +3,23 @@ class ConnectionManager {
         this.websocket = new WebSocket(ws_url);
 
         this.websocket.onopen = () => {
-            console.log('connected');
+            this.#printlog('Connected.')
             this.get_init_data();
         }
 
         this.websocket.onmessage = () => {
             let message = JSON.parse(event.data);
-            console.log('incoming message:', message);
+            this.#printlog('Received data: ', {message})
 
             switch (message.type) {
                 case 'get_mails':
                     MAILS_MANAGER.update_blocks(message);
+
                     if (message.command)
                         MAILS_MANAGER.handle_command(message.command);
+                    if (message.demo)
+                        MAILS_MANAGER.activate_demo_mod();
+
                     break;
 
                 case 'get_contacts':
@@ -38,14 +42,27 @@ class ConnectionManager {
         let request = {
             'type': 'init',
             'mails_per_page': window.MAILS_PER_PAGE
-        };
+        }
         this.send(request);
     }
 
 
     send(data) {
         let json_data = JSON.stringify(data);
-        console.log('send message: ', json_data)
+        this.#printlog('Sent data: ', json_data)
         this.websocket.send(json_data);
+    }
+
+
+    #printlog(text, data=null) {
+        if (data)
+            console.log(`[${this.#get_date()}] ${text}`, data);
+        else
+            console.log(`[${this.#get_date()}] ${text}`)
+    }
+
+    #get_date() {
+        let dt = new Date;
+        return `${dt.getDate()}-${dt.getMonth()}-${dt.getFullYear()} ${dt.getHours()}:${dt.getMinutes()}:${dt.getSeconds()}`
     }
 }

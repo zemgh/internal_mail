@@ -67,40 +67,40 @@ class MailsBlock{
     }
 
 
-    create_mail(reply_mail=null, draft=false, receivers=null) {
+    create_mail(reply_mail=null, draft=false, receiver=null) {
         this.#mails_list.hide();
         this.#mail_reader.hide();
-        this.#mail_creator.show(reply_mail, receivers);
+        this.#mail_creator.show(reply_mail, receiver);
     }
 
 
-    send_mail(receivers, subject, message) {
+    send_mail(receiver, subject, message) {
         if (!this.wait) {
-            MAILS_MANAGER.send_mail(receivers, subject, message);
+            MAILS_MANAGER.send_mail(receiver, subject, message);
             this.wait = true;
         }
     }
 
 
-    send_delayed_mail(receivers, subject, message, date, time) {
+    send_delayed_mail(receiver, subject, message, date, time) {
         let dt = Datetime.convert_to_utc_string(date, time);
-        MAILS_MANAGER.send_delayed_mail(receivers, subject, message, dt);
+        MAILS_MANAGER.send_delayed_mail(receiver, subject, message, dt);
     }
 
 
-    send_draft(receivers, subject, message) {
-        MAILS_MANAGER.send_draft(receivers, subject, message);
+    send_draft(receiver, subject, message) {
+        MAILS_MANAGER.send_draft(receiver, subject, message);
     }
 
 
-    save_draft(id, receivers, subject, message) {
-        MAILS_MANAGER.save_draft(id, receivers, subject, message);
+    save_draft(id, receiver, subject, message) {
+        MAILS_MANAGER.save_draft(id, receiver, subject, message);
     }
 
 
-    convert_to_mail(id, receivers, subject, message) {
+    convert_to_mail(id, receiver, subject, message) {
         if (!this.wait) {
-            MAILS_MANAGER.convert_to_mail(id, receivers, subject, message);
+            MAILS_MANAGER.convert_to_mail(id, receiver, subject, message);
             this.wait = true;
         }
     }
@@ -508,7 +508,7 @@ class MailCreater {
     constructor(parent) {
         this.parent = parent;
         this.block = ElementsManager.create_new_mail_form(this.parent.type)
-        this.receivers = this.block.querySelector('#receivers');
+        this.receiver = this.block.querySelector('#receiver');
         this.subject = this.block.querySelector('#subject');
         this.message = this.block.querySelector('#message');
         this.delayed = this.block.querySelector('#delayed');
@@ -520,12 +520,12 @@ class MailCreater {
     }
 
 
-    show(mail=null, receivers=null) {
+    show(mail=null, receiver=null) {
         this.reply_mail = mail;
         if (this.reply_mail)
             this.#add_reply_attrs();
-        if (receivers)
-            this.receivers.value = receivers;
+        if (receiver)
+            this.receiver.value = receiver;
         this.block.style.display = 'flex';
     }
 
@@ -538,13 +538,13 @@ class MailCreater {
 
     #add_reply_attrs() {
         if (this.parent.type === 'drafts') {
-            this.receivers.value = this.reply_mail.receivers;
+            this.receiver.value = this.reply_mail.receiver;
             this.message.value = this.reply_mail.message;
             this.subject.value = this.reply_mail.subject;
         }
 
         else {
-            this.receivers.value = this.reply_mail.sender;
+            this.receiver.value = this.reply_mail.sender;
 
             if (this.reply_mail.subject.slice(0, 4) === 'Re: ')
                 this.subject.value = this.subject.value = this.reply_mail.subject;
@@ -569,7 +569,7 @@ class MailCreater {
 
 
     #clear_reply_attrs() {
-        this.receivers.value = '';
+        this.receiver.value = '';
         this.subject.value = '';
         this.message.value = '';
     }
@@ -584,12 +584,12 @@ class MailCreater {
 
             send.addEventListener('click', () =>
                 this.#check_data_and_send(
-                    [this.receivers.value], this.subject.value, this.message.value, true, this.reply_mail.id));
+                    this.receiver.value, this.subject.value, this.message.value, true, this.reply_mail.id));
 
             let save = this.block.querySelector('#save');
             save.addEventListener('click', () => {
                 this.parent.save_draft(
-                    this.reply_mail.id, [this.receivers.value], this.subject.value, this.message.value);
+                    this.reply_mail.id, this.receiver.value, this.subject.value, this.message.value);
                 back.click();
             })
 
@@ -604,11 +604,11 @@ class MailCreater {
             back.addEventListener('click', () => this.parent.close_create_mail_form(this.reply_mail));
 
             send.addEventListener('click', () =>
-                this.#check_data_and_send([this.receivers.value], this.subject.value, this.message.value));
+                this.#check_data_and_send(this.receiver.value, this.subject.value, this.message.value));
 
             let draft = this.block.querySelector('#draft');
             draft.addEventListener('click', () => {
-                this.parent.send_draft([this.receivers.value], this.subject.value, this.message.value);
+                this.parent.send_draft(this.receiver.value, this.subject.value, this.message.value);
                 back.click();
             })
         }
@@ -643,14 +643,14 @@ class MailCreater {
         this.datetime = new Datetime();
 
         this.date.value = this.datetime.date;
-        this.date.min = this.datetime.date;
+        this.date.min = this.datetime.Offset('date', 'hour', 1);
 
-        this.time.value = this.datetime.timeOffset('hour', 1);
+        this.time.value = this.datetime.Offset('time', 'hour', 1);
     }
 
 
-    #check_data_and_send(receivers, subject, message, convert_to_mail=false, id=null) {
-        if (!receivers[0] || !subject || !message)
+    #check_data_and_send(receiver, subject, message, convert_to_mail=false, id=null) {
+        if (!receiver || !subject || !message)
             return alert('Все поля должны быть заполнены!');
 
         if (this.delayed_options_display) {
@@ -659,23 +659,19 @@ class MailCreater {
         }
 
         if (convert_to_mail)
-            this.parent.convert_to_mail(id, receivers, subject, message);
+            this.parent.convert_to_mail(id, receiver, subject, message);
 
         else if (this.delayed_options_display)
-            this.parent.send_delayed_mail(receivers, subject, message, this.date.value, this.time.value)
+            this.parent.send_delayed_mail(receiver, subject, message, this.date.value, this.time.value)
 
         else
-            this.parent.send_mail(receivers, subject, message);
+            this.parent.send_mail(receiver, subject, message);
     }
 
     #check_datetime() {
-        if (this.date.value === new Datetime().date) {
-            let time = Number(this.time.value.replace(':', ''));
-            let current_time = Number(new Datetime().time.replace(':', ''));
-            if (time <= current_time)
-                return false;
-        }
-        return true;
+        let current_dt = new Date()
+        let delayed_dt = new Date(`${this.date.value}T${this.time.value}:00`)
+        return delayed_dt > current_dt;
     }
 }
 
@@ -762,6 +758,7 @@ class Filter {
 
         this.reset_button.addEventListener('click', () => {
             this.#clear();
+            this.#set_input_datetime();
             this.send_button.click();
         })
     }
@@ -781,7 +778,7 @@ class Filter {
 
 
     #set_min_max_dates_for_input() {
-        this.first_date.min = this.datetime.dateOffset('year', -1);
+        this.first_date.min = this.datetime.Offset('date', 'year', -1);
         this.first_date.max = this.datetime.date;
         this.last_date.min = this.first_date.value;
         this.last_date.max = this.datetime.date;
@@ -789,7 +786,7 @@ class Filter {
 
 
     #set_default_date() {
-        this.first_date.value = this.datetime.dateOffset('month', -3);
+        this.first_date.value = this.datetime.Offset('date', 'month', -3);
         this.last_date.value = this.datetime.date;
     }
 
@@ -822,7 +819,7 @@ class MailLine {
             this.inner_line.className = 'list_inner_line_unread';
 
         if (['sent', 'drafts'].includes(this.type))
-            this.sender.innerText = this.mail.receivers;
+            this.sender.innerText = this.mail.receiver;
         else
             this.sender.innerText = this.mail.sender;
 
@@ -836,11 +833,8 @@ class MailLine {
 class Datetime {
     constructor() {
         this.datetime = new Date();
-        this.utc_datetime = this.#get_utc_datetime();
         this.date = this.#get_date(this.datetime);
         this.time = this.#get_time(this.datetime);
-        this.utc_date = this.#get_utc_date();
-        this.utc_time = this.#get_utc_time();
     }
 
     static convert_to_utc_string(date, time) {
@@ -852,32 +846,19 @@ class Datetime {
         return `${date} ${time}`;
     }
 
-    timeOffset(attr, value) {
-        let datetime = new Date(this.datetime.getTime());
-        switch (attr) {
-            case 'hour': datetime.setHours(datetime.getHours() + value); break;
-        }
-
-        return this.#get_time(datetime);
-    }
-
-    dateOffset(attr, value) {
+    Offset(type, attr, value) {
         let datetime = new Date(this.datetime.getTime());
         switch (attr) {
             case 'month':
                 datetime.setMonth(datetime.getMonth() + value); break;
             case 'year':
                 datetime.setFullYear(datetime.getFullYear() + value); break;
+            case 'hour':
+                datetime.setHours(datetime.getHours() + value); break;
         }
-
-        return this.#get_date(datetime);
-    }
-
-    #get_utc_datetime() {
-        let offset = this.datetime.getTimezoneOffset();
-        let utc_datetime = new Date(this.datetime.getTime());
-        utc_datetime.setMinutes(utc_datetime.getMinutes() + offset);
-        return utc_datetime;
+        if (type === 'date')
+            return this.#get_date(datetime);
+        return this.#get_time(datetime);
     }
 
     #get_date(datetime) {
@@ -886,14 +867,5 @@ class Datetime {
 
     #get_time(datetime) {
         return `${String(datetime.getHours()).padStart(2, '0')}:${String(datetime.getMinutes()).padStart(2, '0')}`;
-    }
-
-
-    #get_utc_date() {
-        return this.#get_date(this.utc_datetime);
-    }
-
-    #get_utc_time() {
-        return this.#get_time(this.utc_datetime);
     }
 }

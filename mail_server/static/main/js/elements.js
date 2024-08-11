@@ -99,17 +99,17 @@ function ElementsManagerClass () {
         let options_block = this.create_new_mail_options_block(type);
         let delayed = this.create_delayed_checkbox();
         let delayed_options = this.create_delayed_options();
-        let receivers = this.create_input_with_label_new_mail('receivers', 'Кому:');
+        let receiver = this.create_input_with_label_new_mail('receiver', 'Кому:');
         let subject = this.create_input_with_label_new_mail('subject', 'Тема:');
         let message = this.create_base_node('textarea', {className: 'create_message', id: 'message'});
 
-        return this.combine(main_block, [options_block, delayed, delayed_options, receivers, subject, message]);
+        return this.combine(main_block, [options_block, delayed, delayed_options, receiver, subject, message]);
     }
 
 
     this.create_input_with_label_new_mail = function(id, text) {
         let line = this.create_base_node('div',{className: 'create_line'});
-        let input = this.create_base_node('input', {type: 'text', className: 'create_receivers_subject', id: id});
+        let input = this.create_base_node('input', {type: 'text', className: 'create_receiver_subject', id: id});
         let label = this.create_base_node('div', {className: 'create_label', innerText: text});
 
         return this.combine(line, [label, input]);

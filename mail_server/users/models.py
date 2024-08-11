@@ -58,6 +58,7 @@ class UserValidators:
 class User(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_demo = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
 
     username = models.CharField(max_length=30, unique=True, db_index=True, verbose_name='Логин',

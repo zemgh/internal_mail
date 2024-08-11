@@ -272,7 +272,7 @@ div.create_delayed_option_line{
     gap: 10px;
 }
 
-input.create_receivers_subject, input.delayed_options_datetime{
+input.create_receiver_subject, input.delayed_options_datetime{
     background-color: wheat;
     box-sizing: border-box;
     border: 0;

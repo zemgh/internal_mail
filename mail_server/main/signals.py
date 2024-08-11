@@ -15,13 +15,11 @@ def send(layer, user, methods):
 
 @receiver(post_save, sender=Mail)
 def new_mail(sender, instance, created, **kwargs):
-    if not created and not instance.read and instance.receivers.exists():
+    if created:
         channel_layer = get_channel_layer()
         send(channel_layer, instance.sender, ['send_sent'])
+        send(channel_layer, instance.receiver, ['send_received'])
 
-        receivers = instance.receivers.all()
-        for user in receivers:
-            send(channel_layer, user, ['send_received'])
 
 
 @receiver(post_save, sender=DraftMail)

@@ -97,3 +97,19 @@ button.contacts_add_button:hover{
     background-color: white;
 }
 
+div.test_buttons_block{
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+button.test_button{
+    border-radius: 5px;
+    border: 0;
+    background-color: yellow;
+}
+
+button.test_button:hover{
+    background-color: white;
+}

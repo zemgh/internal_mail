@@ -12,17 +12,13 @@ class MailSerializer:
         m_data = {
             'id': str(mail.id),
             'sender': mail.sender.username,
-            'receivers': cls.get_receivers(mail.receivers.all()),
+            'receiver': mail.receiver.username,
             'subject': mail.subject,
             'message': mail.message,
             'created': mail.get_datetime,
             'read': mail.read
         }
         return m_data
-
-    @staticmethod
-    def get_receivers(receivers):
-        return [user.username for user in receivers]
 
 
 class DraftSerializer:
@@ -39,7 +35,7 @@ class DraftSerializer:
         d_data = {
             'id': str(draft.id),
             'sender': draft.sender.username,
-            'receivers': draft.receivers,
+            'receiver': draft.receiver,
             'subject': draft.subject,
             'message': draft.message,
             'created': draft.get_datetime,
