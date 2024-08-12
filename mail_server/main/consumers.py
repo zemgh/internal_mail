@@ -1,8 +1,10 @@
 import json
+import time
 from datetime import datetime, timedelta
 
 from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 from main.models import Mail, DraftMail, DelayedMail
 from main.serializers import MailSerializer, DraftSerializer
@@ -31,6 +33,7 @@ class MainConsumer(WebsocketConsumer):
 
     demo_mod = False
     test_user = None
+    ping = 0
 
     def connect(self):
         self.accept()
@@ -38,6 +41,8 @@ class MainConsumer(WebsocketConsumer):
         self.printlog(f'User <{self.user}> connected. Channel name: {self.channel_name}')
 
     def receive(self, text_data=None, bytes_data=None):
+        time.sleep(self.ping)
+
         data = json.loads(text_data)
         self.printlog(f'Data received from <{self.user}>: {data}')
 
@@ -53,10 +58,10 @@ class MainConsumer(WebsocketConsumer):
 
     def init_user(self):
         self.user = self.scope['user'].__dict__['_wrapped']
-        self.contacts = self.user.contacts.all()
+        self.contacts = self.user.get_contacts()
         if self.user.is_demo:
             self.demo_mod = True
-            self.set_test_user()
+            self.set_demo_user()
         self.user.channel = self.channel_name
         self.user.save(update_fields=['channel'])
 
@@ -140,11 +145,13 @@ class MainConsumer(WebsocketConsumer):
                 fields['created__lte'] = datetime.strptime(v, '%Y-%m-%d') + timedelta(days=1)
         self._filter_options = fields
 
-    def send_command(self, command):
+    def send_command(self, command, **kwargs):
         data = {
             'type': 'command',
             'command': command
         }
+        if kwargs:
+            data.update(kwargs)
         self.send(json.dumps(data))
         self.printlog(f'Sent command to <{self.user}>: {command}')
 
@@ -202,7 +209,7 @@ class MainConsumer(WebsocketConsumer):
             message=data['message']
         )
 
-        self.send_command('close_create_form')
+        self.send_command(command='close_create_form')
 
     def delete_mails(self, data):
         id_list = data['mails_list']
@@ -247,7 +254,7 @@ class MainConsumer(WebsocketConsumer):
 
         make_mail_from_delayed_mail.apply_async(eta=dt, kwargs={'delayed_mail_id': delayed_mail.id})
 
-        self.send_command('close_create_form')
+        self.send_command(command='close_create_form')
 
     def create_draft(self, data):
         receiver = User.objects.get(username=data['receiver'])
@@ -315,7 +322,7 @@ class MainConsumer(WebsocketConsumer):
 
         self.user.contacts.add(user)
         self.user.save()
-        self.contacts = self.user.contacts.all()
+        self.contacts = self.user.get_contacts()
 
         self.send_contacts(add=True)
 
@@ -330,7 +337,7 @@ class MainConsumer(WebsocketConsumer):
 
         self.user.contacts.remove(user)
         self.user.save()
-        self.contacts = self.user.contacts.all()
+        self.contacts = self.user.get_contacts()
 
         self.send_contacts()
 
@@ -356,19 +363,32 @@ class MainConsumer(WebsocketConsumer):
         else:
             print(f'[{time}] {text}')
 
-    def set_test_user(self):
+
+    def set_demo_user(self):
+        test_user = self.get_test_user()
+        admin = User.objects.get(username='admin')
+        self.test_user = test_user
+
+        if test_user not in self.contacts:
+            self.user.contacts.add(test_user)
+        if admin not in self.contacts:
+            self.user.contacts.add(admin)
+
+        self.user.save()
+        self.contacts = self.user.get_contacts()
+
+
+    def get_test_user(self):
         try:
-            user = User.objects.get(username='test_user')
+            test_user = User.objects.get(username='test_user')
         except User.DoesNotExist:
-            user = User.objects.create(
+            test_user = User.objects.create(
                 username='test_user',
                 first_name='Тестовый',
                 last_name='Юзвер',
                 secret_word='йцукен'
             )
-        self.test_user = user
-        if user not in self.contacts:
-            self.add_user({'username': user.username})
+        return test_user
 
 
     def create_test_mail(self, useless_data):
@@ -378,8 +398,8 @@ class MainConsumer(WebsocketConsumer):
         mail = self.mail.objects.create(
             sender=self.test_user,
             receiver=self.user,
-            subject='test_mail',
-            message='this is a test mail',
+            subject='Test mail',
+            message='This is a test mail.',
         )
 
         self.printlog(f'Created test mail for <{mail.receiver}>')
@@ -391,8 +411,8 @@ class MainConsumer(WebsocketConsumer):
 
         time = datetime.utcnow() + timedelta(seconds=10)
         delayed_mail = self.delayed_mail.objects.create(
-            subject='test delayed mail',
-            message='This is a test delayed mail',
+            subject='Test delayed mail',
+            message='This is a test delayed mail.',
             sender=self.test_user,
             receiver=self.user,
             send_datetime=time
@@ -400,3 +420,24 @@ class MainConsumer(WebsocketConsumer):
 
         make_mail_from_delayed_mail.apply_async(eta=time, kwargs={'delayed_mail_id': delayed_mail.id})
         self.printlog(f'Created test delayed mail for <{delayed_mail.receiver}>')
+
+
+    def set_ping(self, useless_data):
+        if not self.demo_mod:
+            return self.printlog(f'Демо режим не активирован! user={self.user}', warning=True)
+
+        if self.ping:
+            self.ping = 0
+        else:
+            self.ping = 1
+
+        self.send_command(command='set_ping', ping=self.ping)
+
+
+    def logout_demo_user(self, useless_data):
+        if not self.demo_mod:
+            return self.printlog(f'Демо режим не активирован! user={self.user}', warning=True)
+
+        url = reverse('login')
+        self.send_command(command='logout', url=url)
+        self.disconnect('no more demo mod :(')

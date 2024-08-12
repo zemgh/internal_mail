@@ -5,13 +5,21 @@ from django.contrib.auth.password_validation import validate_password
 from django.utils.safestring import mark_safe
 
 
-class UserLoginForm(AuthenticationForm):
+class BaseForm:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'input_field'})
+
+
+class UserLoginForm(BaseForm, AuthenticationForm):
     class Meta:
         model = get_user_model()
         fields = ['username', 'password']
+        error_messages = {'inactive': 'Аккаунт деактивирован'}
 
 
-class UserRegisterForm(UserCreationForm):
+class UserRegisterForm(BaseForm, UserCreationForm):
     class Meta:
         model = get_user_model()
         fields = ['username', 'first_name', 'last_name', 'secret_word']
@@ -39,7 +47,7 @@ class UserRegisterForm(UserCreationForm):
     )
 
 
-class UserPasswordResetForm(forms.Form):
+class UserPasswordResetForm(BaseForm, forms.Form):
     username = forms.CharField(max_length=30, label='Логин')
     secret_word = forms.CharField(max_length=30, label='Секретное слово', widget=forms.PasswordInput())
 
@@ -56,7 +64,7 @@ class UserPasswordResetForm(forms.Form):
             raise forms.ValidationError('Такой пары не существует!')
 
 
-class UserPasswordChangeForm(forms.Form):
+class UserPasswordChangeForm(BaseForm, forms.Form):
     password_1 = forms.CharField(widget=forms.PasswordInput(), label='Пароль')
     password_2 = forms.CharField(widget=forms.PasswordInput(), label='Ещё раз')
 

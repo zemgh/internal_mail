@@ -37,27 +37,30 @@ class Mail(models.Model, BaseMailsModel):
     message = models.TextField()
     sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='sent_mails')
     receiver = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='received_mails')
-    created = models.DateTimeField(auto_now_add=True)
     answer_for = models.ForeignKey('Mail', on_delete=models.DO_NOTHING, null=True, blank=True)
     deleted = models.BooleanField(default=False)
     read = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
 
 
 class DelayedMail(models.Model, BaseMailsModel):
+    class Meta:
+        ordering = ['-created']
     subject = models.CharField(max_length=50)
     message = models.TextField()
     sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='delayed_mails')
     receiver = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    created = models.DateTimeField(auto_now_add=True)
     send_datetime = models.DateTimeField()
+    created = models.DateTimeField(auto_now_add=True)
 
 
 class DraftMail(models.Model, BaseMailsModel):
     class Meta:
         ordering = ['-created']
 
-    sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='drafts')
     subject = models.CharField(max_length=50, blank=True)
     message = models.TextField(blank=True)
+    sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='drafts')
     receiver = models.CharField(max_length=50, blank=True)
     created = models.DateTimeField(auto_now_add=True)
+

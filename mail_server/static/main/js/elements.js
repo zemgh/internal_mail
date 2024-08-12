@@ -42,12 +42,15 @@ function ElementsManagerClass () {
         let datetime = this.create_base_node('div', {className: 'list_line_datetime', id: 'datetime'});
 
         this.combine(inner_line, [sender, subject, datetime]);
+
+        let checkbox_container = this.create_base_node('div', {className: 'list_line_checkbox_container'})
+
         if (is_checkbox) {
             let checkbox = this.create_base_node('input', {type: 'checkbox', className: 'list_line_checkbox'});
-            return this.combine(line, [checkbox, inner_line]);
+            checkbox_container.appendChild(checkbox);
         }
-        else
-            return this.combine(line, [inner_line]);
+
+        return this.combine(line, [checkbox_container, inner_line]);
     }
 
 
@@ -165,8 +168,10 @@ function ElementsManagerClass () {
 
 
         let options_block = this.create_base_node('div', {className: 'list_options'});
+        let checkbox_container = this.create_base_node('div', {className: 'list_line_checkbox_container'})
         let checkbox = this.create_base_node('input', {type: 'checkbox', id: 'group_checkbox'});
-        options_block.appendChild(checkbox);
+        checkbox_container.appendChild(checkbox);
+        options_block.appendChild(checkbox_container);
 
         if (type === 'received') {
             let del = this.create_options_button_for_list ('mass_delete', 'Удалить');

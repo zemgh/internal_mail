@@ -149,6 +149,12 @@ div.list_line{
 
 input.list_line_checkbox{}
 
+div.list_line_checkbox_container{
+    display: flex;
+    align-items: center;
+    width: 3%;
+}
+
 div.list_inner_line, div.list_inner_line_unread{
     display: flex;
     padding: 5px 10px 5px 10px;
@@ -276,7 +282,7 @@ input.create_receiver_subject, input.delayed_options_datetime{
     background-color: wheat;
     box-sizing: border-box;
     border: 0;
-    outline:none;
+    outline: none;
     border-radius: 5px;
 }
 

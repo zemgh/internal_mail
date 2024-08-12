@@ -452,7 +452,7 @@ class MailViewer {
 
 
     show(mail) {
-        this.info.innerHTML = `Тема: ${mail.subject}<p>Отправитель: ${mail.sender}</p>${mail.created.long}`;
+        this.info.innerHTML = `Тема: ${mail.subject}<p>От: ${mail.sender}</p>${mail.created.long}`;
         this.message.innerText = mail.message;
         this.mail = mail;
         this.block.style.display = 'flex';

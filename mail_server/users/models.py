@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import QuerySet
 from django.utils import timezone
 
 
@@ -30,7 +31,7 @@ class UserValidators:
     digits = string.digits
 
     @classmethod
-    def validate_username(cls, username):
+    def validate_username(cls, username: str) -> str:
         allowed_chars = set(cls.latin_chars + cls.digits + '-_')
         if not set(username).issubset(allowed_chars):
             raise ValidationError("Ник должен состоять из латинских букв(оба регистра), цифр и символов '-', '_'.")
@@ -39,14 +40,14 @@ class UserValidators:
         return username
 
     @classmethod
-    def validate_names(cls, name):
+    def validate_names(cls, name: str) -> str:
         allowed_chars = set(cls.cyrillic_chars + cls.cyrillic_chars.upper())
         if not set(name).issubset(allowed_chars):
             raise ValidationError("Имя/Фамилия должны содержать только буквы русского алфавита.")
         return name.lower().capitalize()
 
     @classmethod
-    def validate_secret_word(cls, secret_word):
+    def validate_secret_word(cls, secret_word: str) -> str:
         allowed_chars = set(cls.cyrillic_chars)
         if not len(secret_word) >= 6:
             raise ValidationError("Длина секретного слова должна быть 6 и более символов.")
@@ -79,12 +80,14 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.username
 
-    def get_full_name(self):
+    def get_full_name(self) -> str:
         return f'{self.last_name} {self.first_name}'
 
+    def get_contacts(self) -> QuerySet:
+        return self.contacts.order_by('username')
 
     @property
-    def is_online(self):
+    def is_online(self) -> bool:
         if self.channel:
             return True
         return False
@@ -121,5 +124,5 @@ class UserResetToken(models.Model):
 
     token_lifetime = 600
 
-    def is_active(self):
+    def is_active(self) -> bool:
         return self.created + timezone.timedelta(seconds=self.token_lifetime) > timezone.now()

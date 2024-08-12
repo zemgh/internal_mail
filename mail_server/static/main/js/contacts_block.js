@@ -1,7 +1,9 @@
 let test_button_1 = document.querySelector('#test_mail');
 let test_button_2 = document.querySelector('#test_delayed_mail');
-test_button_1.addEventListener('click', (event) => MAILS_MANAGER.get_test_mail())
-test_button_2.addEventListener('click', (event) => MAILS_MANAGER.get_test_delayed_mail())
+let test_button_3 = document.querySelector('#set_ping');
+test_button_1.addEventListener('click', (event) => MAILS_MANAGER.get_test_mail());
+test_button_2.addEventListener('click', (event) => MAILS_MANAGER.get_test_delayed_mail());
+test_button_3.addEventListener('click', (event) => MAILS_MANAGER.set_ping());
 
 
 class ContactsManager {
@@ -40,6 +42,13 @@ class ContactsManager {
 
     clear_input() {
         this.add_input.value = '';
+    }
+
+    set_ping(ping) {
+        if (ping)
+            test_button_3.innerHTML = 'Стандартный пинг';
+        else
+            test_button_3.innerHTML = 'Увеличить пинг +1с';
     }
 
     #create_user_line(username) {

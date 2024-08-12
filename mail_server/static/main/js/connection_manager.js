@@ -30,7 +30,7 @@ class ConnectionManager {
                     }
                     break;
 
-                case 'command': MAILS_MANAGER.handle_command(message.command); break
+                case 'command': MAILS_MANAGER.handle_command(message); break
 
                 case 'error': MAILS_MANAGER.raise_alert_error(message['error']); break;
             }

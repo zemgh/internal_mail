@@ -1,12 +1,17 @@
-from django.contrib.auth import get_user_model, logout
+import uuid
+from datetime import datetime, timedelta
+
+from django.contrib.auth import get_user_model, logout, login, authenticate
 from django.contrib.auth.views import LoginView
-from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
-from django.views.generic import FormView, CreateView
+from django.views import View
+from django.views.generic import FormView, CreateView, TemplateView
 
 from users.forms import UserLoginForm, UserRegisterForm, UserPasswordResetForm, UserPasswordChangeForm
 from users.models import UserResetToken
+
+from users.tasks import deactivate_demo_user, create_hello_mail
 
 User = get_user_model()
 
@@ -88,6 +93,36 @@ def user_logout(request):
     return redirect('login')
 
 
+class DemoActivationView(View):
+    password = 'demo_user_password_123'
+
+    def get(self, request, *args, **kwargs):
+        user = self.create_demo_user()
+
+        user = authenticate(username=user.username, password=self.password)
+        login(request, user)
+
+        self.create_tasks(user.id)
+
+        return redirect('main')
+
+    def create_demo_user(self) -> User:
+        user = User.objects.create_user(
+            username=str(uuid.uuid4())[:30],
+            first_name='Демо',
+            last_name='Юзвер',
+            secret_word='йцукен',
+            password=self.password,
+            is_demo=True
+        )
+        user.username = 'demo_user_' + str(user.id)
+        user.save()
+        return user
+
+    def create_tasks(self, user_id):
+        time = datetime.utcnow() + timedelta(days=1)
+        deactivate_demo_user.apply_async(eta=time, kwargs={'user_id': user_id})
+        create_hello_mail.apply_async(countdown=5, kwargs={'user_id': user_id})
 
 
 

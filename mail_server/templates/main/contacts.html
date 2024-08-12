@@ -5,7 +5,7 @@
 
 <div class="contacts">
     <div class="contacts_user">
-        <div>{{ user }}</div>
+        <div style="color: blue"><b>{{ user }}</b></div>
         <div><a href="{% url 'logout' %}">Выйти</a></div>
     </div>
 
@@ -23,6 +23,7 @@
     <div id="test_block" class="test_buttons_block">
         <button id="test_mail" class="test_button">Тестовое письмо</button>
         <button id="test_delayed_mail" class="test_button">Отложенное письмо 10с</button>
+        <button id="set_ping" class="test_button">Увеличить пинг +1с</button>
     </div>
 
 </div>

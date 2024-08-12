@@ -3,14 +3,22 @@
 {% block form %}
 
     <div class="page">
-        <form method="post" class="form_window">
-            {% csrf_token %}
+        <form method="post" class="form_window">{% csrf_token %}
+
             {% include 'users/includes/form.html' %}
+
             <button type="submit" class="button">Войти</button>
+
             <div class="options">
                 <a href="{% url 'password_reset' %}">Забыли пароль?</a>
                 <a href="{% url 'register' %}">Регистрация</a>
             </div>
+
+            <div class="demo">
+                <a href="{% url 'demo' %}">Демо-режим</a>
+                <br>(без регистрации и смс)
+            </div>
+
         </form>
     </div>
 

@@ -85,7 +85,7 @@ DATABASES = {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'internal_mail_db_2',
+        'NAME': 'internal_mail',
         'USER': 'internal_mail',
         'PASSWORD': 'qwerty',
         'HOST': 'localhost',
@@ -104,9 +104,6 @@ CHANNEL_LAYERS = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {

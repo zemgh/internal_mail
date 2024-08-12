@@ -6,38 +6,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase, SimpleTestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
 from users.forms import UserLoginForm, UserRegisterForm, UserPasswordResetForm, UserPasswordChangeForm
 from users.models import UserResetToken, UserValidators
+from users.tests.objects import TestUser
 from users.views import UserLoginView, UserRegistrationView, UserPasswordResetView, UserPasswordChangeView
-
-
-class TestUser:
-    model = get_user_model()
-    username = 'test_user_name'
-    first_name = 'Петя'
-    last_name = 'Петечкин'
-    secret_word = 'секрет'
-    password = 'test_password_123'
-    counter = 0
-
-    @classmethod
-    def create_test_user(cls, multiple=False):
-        def create_multiple_users_name():
-            username = f'{cls.username}-{cls.counter}'
-            cls.counter += 1
-            return username
-
-        user = cls.model.objects.create(
-            username=cls.username if not multiple else create_multiple_users_name(),
-            first_name=cls.first_name,
-            last_name=cls.last_name,
-            secret_word=cls.secret_word,
-            password=cls.password
-        )
-
-        return user
 
 
 class UserModelTestCases(TestCase):
@@ -61,8 +34,9 @@ class UserModelTestCases(TestCase):
     def test_default_attributes(self):
         self.assertEqual(self.user.is_active, True)
         self.assertEqual(self.user.is_staff, False)
+        self.assertEqual(self.user.is_demo, False)
         self.assertIsInstance(self.user.created, datetime.datetime)
-        self.assertEqual(self.user.status, False)
+        self.assertEqual(self.user.channel, None)
 
     def test_secret_word(self):
         self.assertTrue(self.user.check_secret_word(TestUser.secret_word))

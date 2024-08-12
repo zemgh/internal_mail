@@ -174,12 +174,19 @@ class MailsManager {
         CONNECTION_MANAGER.send(data);
     }
 
-        handle_command(command) {
-        switch(command) {
+    handle_command(message) {
+        switch(message.command) {
             case 'close_create_form':
                 this.current_block.close_create_mail_form();
                 this.current_block.wait = false;
                 break;
+
+            case 'logout':
+                window.location.replace(`http://${window.location.host}${message.url}`);
+                break;
+
+            case 'set_ping':
+                window.CONTACTS_MANAGER.set_ping(message.ping);
         }
     }
 
@@ -188,6 +195,12 @@ class MailsManager {
         this.current_block.wait = false;
         alert(text);
 
+    }
+
+
+    activate_demo_mod() {
+        window.demo_mod = true;
+        document.querySelector('#test_block').style.display = 'flex';
     }
 
 
@@ -207,9 +220,11 @@ class MailsManager {
     }
 
 
-    activate_demo_mod() {
-        window.demo_mod = true;
-        document.querySelector('#test_block').style.display = 'flex';
+    set_ping() {
+        let data = {
+            'type': 'set_ping'
+        }
+        CONNECTION_MANAGER.send(data);
     }
 
 
