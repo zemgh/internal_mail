@@ -166,10 +166,11 @@ class MailsManager {
     }
 
 
-    read(id_list) {
+    read(id_list, type) {
         let data = {
             'type': 'read_mails',
-            'mails_list': id_list
+            'mails_list': id_list,
+            'method': type
         }
         CONNECTION_MANAGER.send(data);
     }

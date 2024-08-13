@@ -16,7 +16,7 @@ class ConnectionManager {
                     MAILS_MANAGER.update_blocks(message);
 
                     if (message.command)
-                        MAILS_MANAGER.handle_command(message.command);
+                        MAILS_MANAGER.handle_command(message);
                     if (message.demo)
                         MAILS_MANAGER.activate_demo_mod();
 

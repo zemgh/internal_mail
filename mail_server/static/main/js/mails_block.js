@@ -108,7 +108,7 @@ class MailsBlock{
 
     read_mails(id_list) {
         this.#read_lines(id_list);
-        MAILS_MANAGER.read(id_list);
+        MAILS_MANAGER.read(id_list, this.type);
     }
 
 

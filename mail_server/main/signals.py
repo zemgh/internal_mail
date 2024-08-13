@@ -15,6 +15,10 @@ def send(layer, user, methods):
 
 @receiver(post_save, sender=Mail)
 def new_mail(sender, instance, created, **kwargs):
+    user = instance.receiver
+    user.read_counter += 1
+    user.save()
+
     if created:
         channel_layer = get_channel_layer()
         send(channel_layer, instance.sender, ['send_sent'])

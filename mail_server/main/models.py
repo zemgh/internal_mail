@@ -53,6 +53,15 @@ class DelayedMail(models.Model, BaseMailsModel):
     send_datetime = models.DateTimeField()
     created = models.DateTimeField(auto_now_add=True)
 
+    def convert_to_mail(self):
+        mail = Mail.objects.create(
+            subject=self.subject,
+            message=self.message,
+            sender=self.sender,
+            receiver=self.receiver
+        )
+        return mail
+
 
 class DraftMail(models.Model, BaseMailsModel):
     class Meta:
@@ -63,4 +72,13 @@ class DraftMail(models.Model, BaseMailsModel):
     sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='drafts')
     receiver = models.CharField(max_length=50, blank=True)
     created = models.DateTimeField(auto_now_add=True)
+
+    def convert_to_mail(self, receiver, subject, message):
+        mail = Mail.objects.create(
+            sender=self.sender,
+            receiver=receiver,
+            subject=subject,
+            message=message
+        )
+        return mail
 

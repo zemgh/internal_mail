@@ -71,6 +71,7 @@ class User(AbstractBaseUser):
 
     contacts = models.ManyToManyField('User')
     channel = models.CharField(max_length=100, null=True, blank=True)
+    read_counter = models.IntegerField(default=0)
 
     objects = CustomUserManager()
 
