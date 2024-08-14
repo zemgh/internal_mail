@@ -1,12 +1,12 @@
 import json
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 
 from main.models import Mail, DraftMail, DelayedMail
 from main.serializers import MailSerializer, DraftSerializer
 from main.tasks import make_mail_from_delayed_mail
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
+from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
@@ -342,6 +342,11 @@ class DemoMixin:
     demo_mod = False
     test_user = None
     ping = 0
+
+    def receive(self, text_data=None, bytes_data=None):
+        if self.ping:
+            time.sleep(self.ping)
+        return super().receive(text_data, bytes_data)
 
     def set_demo_user(self):
         test_user = self.get_test_user()

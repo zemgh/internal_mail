@@ -1,17 +1,18 @@
 import json
-import time
 from datetime import datetime
 
 from channels.generic.websocket import WebsocketConsumer
-from main.consumer_mixins import DemoMixin, ContactsMixin, ObjectHandler, FilterMixin, SenderMixin, UserMixin, \
-    RequestsHandlerMixin, ValidatorsMixin
+from main.consumer_mixins import ContactsMixin, ObjectHandler, FilterMixin, SenderMixin, UserMixin, \
+    RequestsHandlerMixin, ValidatorsMixin, DemoMixin
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 
-class MainConsumer(WebsocketConsumer,
-                   UserMixin, RequestsHandlerMixin, SenderMixin, ValidatorsMixin, ObjectHandler, FilterMixin, ContactsMixin, DemoMixin):
+class MainConsumer(DemoMixin, WebsocketConsumer,
+                   UserMixin, RequestsHandlerMixin, SenderMixin, ValidatorsMixin, ObjectHandler, FilterMixin,
+                   ContactsMixin):
 
     def connect(self):
         self.accept()
@@ -19,8 +20,6 @@ class MainConsumer(WebsocketConsumer,
         self.printlog(f'User <{self.user}> connected. Channel name: {self.channel_name}')
 
     def receive(self, text_data=None, bytes_data=None):
-        time.sleep(self.ping)
-
         data = json.loads(text_data)
         self.printlog(f'Data received from <{self.user}>: {data}')
 
@@ -33,7 +32,6 @@ class MainConsumer(WebsocketConsumer,
         self.user.channel = None
         self.user.save(update_fields=['channel'])
         self.printlog(f'User <{self.user}> has disconnected. Code: {code}')
-
 
     @staticmethod
     def printlog(text, warning=False):
