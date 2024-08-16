@@ -1,4 +1,5 @@
 from asgiref.sync import async_to_sync
+from celery.exceptions import Ignore
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model, logout
 
@@ -57,3 +58,5 @@ def create_hello_mail(**kwargs):
 
     except User.DoesNotExist:
         print(f'*** User (id={kwargs['user_id']}) not found /create_hello_mail/')
+
+

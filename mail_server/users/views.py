@@ -8,6 +8,7 @@ from django.urls import reverse_lazy, reverse
 from django.views import View
 from django.views.generic import FormView, CreateView, TemplateView
 
+from main.models import Mail, DraftMail
 from users.forms import UserLoginForm, UserRegisterForm, UserPasswordResetForm, UserPasswordChangeForm
 from users.models import UserResetToken
 
@@ -102,6 +103,7 @@ class DemoActivationView(View):
         user = authenticate(username=user.username, password=self.password)
         login(request, user)
 
+        self.create_some_mails(user, 5)
         self.create_tasks(user.id)
 
         return redirect('main')
@@ -124,5 +126,25 @@ class DemoActivationView(View):
         deactivate_demo_user.apply_async(eta=time, kwargs={'user_id': user_id})
         create_hello_mail.apply_async(countdown=5, kwargs={'user_id': user_id})
 
+    def create_some_mails(self, user, number):
+        for i in range(number):
+            Mail.objects.create(
+                subject='Test mail',
+                message='This is test mail',
+                sender=user,
+                receiver=user,
+                read=True,
+                deleted=True
+            )
+        for i in range(number):
+            DraftMail.objects.create(
+                subject='Test draft',
+                message='This is test draft',
+                sender=user,
+                receiver='Someone'
+            )
+
+        user.read_counter = 0
+        user.save()
 
 

@@ -1,4 +1,4 @@
-from main.models import DelayedMail, Mail
+from main.models import DelayedMail
 from mail_server.celery import app
 
 

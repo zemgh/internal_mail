@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import datetime
 
 from channels.generic.websocket import WebsocketConsumer
@@ -10,9 +11,9 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class MainConsumer(DemoMixin, WebsocketConsumer,
+class MainConsumer(WebsocketConsumer,
                    UserMixin, RequestsHandlerMixin, SenderMixin, ValidatorsMixin, ObjectHandler, FilterMixin,
-                   ContactsMixin):
+                   ContactsMixin, DemoMixin):
 
     def connect(self):
         self.accept()
@@ -20,6 +21,9 @@ class MainConsumer(DemoMixin, WebsocketConsumer,
         self.printlog(f'User <{self.user}> connected. Channel name: {self.channel_name}')
 
     def receive(self, text_data=None, bytes_data=None):
+        if getattr(self, 'ping'):
+            time.sleep(self.ping)
+
         data = json.loads(text_data)
         self.printlog(f'Data received from <{self.user}>: {data}')
 

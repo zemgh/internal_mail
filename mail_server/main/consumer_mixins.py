@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta, datetime, time
+from datetime import timedelta, datetime
 
 from main.models import Mail, DraftMail, DelayedMail
 from main.serializers import MailSerializer, DraftSerializer
@@ -22,6 +22,9 @@ class UserMixin:
             self.set_demo_user()
         self.user.channel = self.channel_name
         self.user.save(update_fields=['channel'])
+
+    def update_user(self):
+        self.user = User.objects.get(username=self.user.username)
 
 
 class RequestsHandlerMixin:
@@ -48,11 +51,13 @@ class RequestsHandlerMixin:
 
         self.send_mails(methods=methods)
 
-    def signals_handler(self, message, **kwargs):
+    def signals_handler(self, message):
+        # if message.get('update_user'):
+        #     self.update_user()
         methods = []
         for method in message['methods']:
             methods.append(getattr(self, method))
-        self.send_mails(methods=methods, **kwargs)
+        self.send_mails(methods=methods)
 
 
 class SenderMixin:
@@ -81,14 +86,14 @@ class SenderMixin:
         self.send(json.dumps(data))
         self.printlog(f'Sent data to <{self.user}>: {data}')
 
-    def send_all_mails(self):
+    def send_all_mails(self, **kwargs):
         send_data = {}
         methods = [self.send_received, self.send_sent, self.send_deleted, self.send_drafts]
         for method in methods:
             send_data.update(method())
         return send_data
 
-    def send_received(self):
+    def send_received(self, **kwargs):
         number_of_mails = self.get_number_of_mails('received')
 
         if self.filter_type and self.filter_type == 'received':
@@ -97,25 +102,27 @@ class SenderMixin:
             received_mails = self.user.received_mails.filter(deleted=False)[:number_of_mails]
 
         mails_data = self.mail_serializer.get_data_for_json(queryset=received_mails)
+        self.update_user()
         unread_data = self.user.read_counter
+
         send_data = {'received': mails_data, 'unread': unread_data}
         return send_data
 
-    def send_sent(self):
+    def send_sent(self, **kwargs):
         number_of_mails = self.get_number_of_mails('sent')
         sent_mails = self.user.sent_mails.all()[:number_of_mails]
         mails_data = self.mail_serializer.get_data_for_json(queryset=sent_mails)
         send_data = {'sent': mails_data}
         return send_data
 
-    def send_deleted(self):
+    def send_deleted(self, **kwargs):
         number_of_mails = self.get_number_of_mails('deleted')
         deleted_mails = self.user.received_mails.filter(deleted=True)[:number_of_mails]
         mails_data = self.mail_serializer.get_data_for_json(queryset=deleted_mails)
         send_data = {'deleted': mails_data}
         return send_data
 
-    def send_drafts(self):
+    def send_drafts(self, **kwargs):
         number_of_mails = self.get_number_of_mails('drafts')
         drafts = self.user.drafts.all()[:number_of_mails]
         drafts_data = self.draft_serializer.get_data_for_json(queryset=drafts)
@@ -342,11 +349,6 @@ class DemoMixin:
     demo_mod = False
     test_user = None
     ping = 0
-
-    def receive(self, text_data=None, bytes_data=None):
-        if self.ping:
-            time.sleep(self.ping)
-        return super().receive(text_data, bytes_data)
 
     def set_demo_user(self):
         test_user = self.get_test_user()
