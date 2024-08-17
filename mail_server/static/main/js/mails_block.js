@@ -11,27 +11,24 @@ class MailsBlock{
     #MAILS = document.querySelector('.mails');
     #block = ElementsManager.samples.mails_block.cloneNode(true);
 
-
     constructor(type) {
         this.type = type;
         this.#mail_creator = new MailCreater(this);
         this.#mail_reader = new MailViewer(this);
         this.#mails_list = new MailsList(this);
+        this.menu = this.#get_menu_line(this.type);
         this.#create_mails_block();
     }
-
 
     show_mails() {
         this.#MAILS.appendChild(this.#block);
     }
-
 
     update(mails_list, unread=null) {
         if (this.type === 'received')
             this.#update_counter(unread);
         this.#mails_list.update_list(mails_list);
     }
-
 
     get_more_mails() {
         this.mails_per_page_multiplier++;
@@ -41,7 +38,6 @@ class MailsBlock{
         MAILS_MANAGER.get_mails(options);
     }
 
-
     send_filter(options) {
         for (let k in options) {
             if (options[k] === '')
@@ -49,7 +45,6 @@ class MailsBlock{
         }
         MAILS_MANAGER.send_filter(this.type, options);
     }
-
 
     read_mail(mail) {
         this.#mails_list.hide();
@@ -60,19 +55,16 @@ class MailsBlock{
         }
     }
 
-
     close_mail() {
         this.#mail_reader.hide();
         this.#mails_list.show();
     }
-
 
     create_mail(reply_mail=null, draft=false, receiver=null) {
         this.#mails_list.hide();
         this.#mail_reader.hide();
         this.#mail_creator.show(reply_mail, receiver);
     }
-
 
     send_mail(receiver, subject, message) {
         if (!this.wait) {
@@ -81,22 +73,18 @@ class MailsBlock{
         }
     }
 
-
     send_delayed_mail(receiver, subject, message, date, time) {
         let dt = Datetime.convert_to_utc_string(date, time);
         MAILS_MANAGER.send_delayed_mail(receiver, subject, message, dt);
     }
 
-
     send_draft(receiver, subject, message) {
         MAILS_MANAGER.send_draft(receiver, subject, message);
     }
 
-
     save_draft(id, receiver, subject, message) {
         MAILS_MANAGER.save_draft(id, receiver, subject, message);
     }
-
 
     convert_to_mail(id, receiver, subject, message) {
         if (!this.wait) {
@@ -105,30 +93,25 @@ class MailsBlock{
         }
     }
 
-
     read_mails(id_list) {
         this.#read_lines(id_list);
         MAILS_MANAGER.read(id_list, this.type);
     }
-
 
     delete_mails(id_list) {
         this.#mails_list.make_deleted(id_list);
         MAILS_MANAGER.delete(id_list);
     }
 
-
     delete_drafts(id_list) {
         this.#mails_list.make_deleted(id_list);
         MAILS_MANAGER.delete_drafts(id_list);
     }
 
-
     recovery_mails(id_list) {
         this.#delete_lines(id_list);
         MAILS_MANAGER.recovery(id_list);
     }
-
 
     close_create_mail_form(reply_mail=null) {
         this.#mail_creator.hide();
@@ -139,11 +122,9 @@ class MailsBlock{
             this.#mails_list.show();
     }
 
-
     clear_selected() {
         this.#mails_list.clear_selected();
     }
-
 
     reset() {
         this.#mails_list.show();
@@ -163,11 +144,9 @@ class MailsBlock{
             this.#mails_list.reset();
     }
 
-
     get number_of_mails() {
         return window.MAILS_PER_PAGE * this.mails_per_page_multiplier
     }
-
 
     #update_counter(count) {
         let field = document.querySelector('#received_mails').querySelector('.menu_line_counter')
@@ -177,16 +156,13 @@ class MailsBlock{
             field.innerText = '';
     }
 
-
     #read_lines(id_list) {
         this.#mails_list.make_read(id_list);
     }
 
-
     #delete_lines(id_list) {
         this.#mails_list.make_deleted(id_list);
     }
-
 
     #create_mails_block() {
         ElementsManager.combine(this.#block, [this.#mail_creator.block, this.#mail_reader.block, this.#mails_list.block]);
@@ -197,6 +173,20 @@ class MailsBlock{
         }
     }
 
+    #get_menu_line(type) {
+        let menu;
+        switch (type) {
+            case 'received':
+                menu = window.MENU_MANAGER.received_mails; break;
+            case 'sent':
+                menu = window.MENU_MANAGER.sent_mails; break;
+            case 'deleted':
+                menu = window.MENU_MANAGER.deleted_mails; break;
+            case 'drafts':
+                menu = window.MENU_MANAGER.drafts; break;
+        }
+        return menu.querySelector('#menu_line');
+    }
 
 }
 
@@ -211,7 +201,6 @@ class MailsList {
     block = ElementsManager.samples.mails_list.cloneNode(true);
     list_block = this.block.firstChild;
 
-
     constructor(parent) {
         this.parent = parent;
 
@@ -222,7 +211,6 @@ class MailsList {
         }
     }
 
-
     update_list(list) {
         if (this.list !== list) {
             this.list = list;
@@ -231,12 +219,10 @@ class MailsList {
         }
     }
 
-
     reset() {
         this.list_block.innerHTML = '';
         this.#mails_list_to_block();
     }
-
 
     make_read(id_list) {
         let lines = this.block.querySelectorAll('.list_line');
@@ -247,7 +233,6 @@ class MailsList {
         })
     }
 
-
     make_deleted(id_list) {
         let lines = this.block.querySelectorAll('.list_line');
         lines.forEach(el => {
@@ -256,17 +241,14 @@ class MailsList {
         })
     }
 
-
     show() {
         this.block.style.display = 'flex';
     }
-
 
     hide() {
         this.block.style.display = 'None';
         this.clear_selected();
     }
-
 
     clear_selected() {
         this.selected = [];
@@ -275,7 +257,6 @@ class MailsList {
         this.checkboxes.forEach(el => el.checked = false);
         this.#check_buttons_status();
     }
-
 
     #mails_list_to_block() {
         if (this.parent.type !== 'sent') {
@@ -328,7 +309,6 @@ class MailsList {
         }
     }
 
-
     #add_group_checkbox_event() {
         this.group_checkbox.addEventListener('change', () => {
             if (this.group_checkbox.checked === true) {
@@ -350,7 +330,6 @@ class MailsList {
         })
     }
 
-
     #select_all() {
         this.selected = [];
         this.checkboxes.forEach(el => {
@@ -358,14 +337,12 @@ class MailsList {
         })
     }
 
-
     #check_buttons_status() {
         if (this.selected.length > 0 && !this.buttons_enabled)
             this.#make_buttons_enabled();
         else if (this.selected.length === 0 && this.buttons_enabled)
             this.#make_buttons_disabled();
     }
-
 
     #make_buttons_enabled() {
         //      Кнопки опций вкл
@@ -414,7 +391,6 @@ class MailsList {
         }
     }
 
-
     #make_buttons_disabled() {
         //      Кнопки опций выкл
 
@@ -433,7 +409,6 @@ class MailsList {
         })
     }
 
-
 }
 
 
@@ -450,14 +425,15 @@ class MailViewer {
         this.#add_buttons_events(this.parent.type);
     }
 
-
     show(mail) {
-        this.info.innerHTML = `Тема: ${mail.subject}<p>От: ${mail.sender}</p>${mail.created.long}`;
+        if (parent.type === 'sent')
+            this.info.innerHTML = `Тема: ${mail.subject}<p>Кому: ${mail.receiver}</p>${mail.created.long}`;
+        else
+            this.info.innerHTML = `Тема: ${mail.subject}<p>От: ${mail.sender}</p>${mail.created.long}`;
         this.message.innerText = mail.message;
         this.mail = mail;
         this.block.style.display = 'flex';
     }
-
 
     hide(){
         this.mail = null;
@@ -467,7 +443,6 @@ class MailViewer {
 
         this.block.style.display = 'None';
     }
-
 
     #add_buttons_events() {
         let back = this.block.querySelector('#back');
@@ -483,7 +458,6 @@ class MailViewer {
                 back.click();
             });
         }
-
 
         if (this.parent.type === 'deleted') {
             let reply = this.block.querySelector('#reply');
@@ -519,7 +493,6 @@ class MailCreater {
         this.#add_delayed_event();
     }
 
-
     show(mail=null, receiver=null) {
         this.reply_mail = mail;
         if (this.reply_mail)
@@ -529,12 +502,10 @@ class MailCreater {
         this.block.style.display = 'flex';
     }
 
-
     hide() {
         this.block.style.display = 'None';
         this.#clear_form();
     }
-
 
     #add_reply_attrs() {
         if (this.parent.type === 'drafts') {
@@ -560,20 +531,17 @@ class MailCreater {
         }
     }
 
-
     #clear_form() {
         this.reply_mail = null;
         this.#clear_reply_attrs();
         this.#delayed_hide();
     }
 
-
     #clear_reply_attrs() {
         this.receiver.value = '';
         this.subject.value = '';
         this.message.value = '';
     }
-
 
     #add_buttons_events() {
         let back = this.block.querySelector('#back');
@@ -614,7 +582,6 @@ class MailCreater {
         }
     }
 
-
     #add_delayed_event() {
         this.delayed.addEventListener('click', () => {
             if (this.delayed_options_display)
@@ -630,14 +597,12 @@ class MailCreater {
         this.delayed_options_display = true;
     }
 
-
     #delayed_hide() {
         this.delayed_options.style.display = 'none';
         this.delayed_options_display = false;
         if (this.delayed.checked)
             this.delayed.checked = false
     }
-
 
     #set_datetime() {
         this.datetime = new Datetime();
@@ -647,7 +612,6 @@ class MailCreater {
 
         this.time.value = this.datetime.Offset('time', 'hour', 1);
     }
-
 
     #check_data_and_send(receiver, subject, message, convert_to_mail=false, id=null) {
         if (!receiver || !subject || !message)
@@ -673,6 +637,7 @@ class MailCreater {
         let delayed_dt = new Date(`${this.date.value}T${this.time.value}:00`)
         return delayed_dt > current_dt;
     }
+
 }
 
 
@@ -689,7 +654,6 @@ class Filter {
     block_show = false;
     datetime;
 
-
     constructor(parent, show_button) {
         this.parent = parent;
         this.show_button = show_button;
@@ -697,7 +661,6 @@ class Filter {
         this.#add_date_inputs_events();
         this.#add_buttons_events();
     }
-
 
     show() {
         this.block.style.display = 'flex';
@@ -710,7 +673,6 @@ class Filter {
         this.show_button.className = 'filter_show';
     }
 
-
     hide() {
         this.block.style.display = 'None';
         this.block_show = false;
@@ -718,7 +680,6 @@ class Filter {
         this.#add_show_button_event(this);
         this.show_button.className = 'filter_hide';
     }
-
 
     #add_show_button_event(obj) {
         function hide_event() {
@@ -738,12 +699,10 @@ class Filter {
             this.show_button.addEventListener('click', show_event, {once: true});
     }
 
-
     #add_date_inputs_events() {
         this.first_date.addEventListener('change', () => this.last_date.min = this.first_date.value);
         this.last_date.addEventListener('change', () => this.first_date.max = this.last_date.value);
     }
-
 
     #add_buttons_events() {
         this.send_button.addEventListener('click', () => {
@@ -763,13 +722,11 @@ class Filter {
         })
     }
 
-
     #clear() {
         this.username.value = '';
         this.first_name.value = '';
         this.last_name.value = '';
     }
-
 
     #set_input_datetime() {
         this.#set_min_max_dates_for_input();
@@ -783,7 +740,6 @@ class Filter {
         this.last_date.min = this.first_date.value;
         this.last_date.max = this.datetime.date;
     }
-
 
     #set_default_date() {
         this.first_date.value = this.datetime.Offset('date', 'month', -3);

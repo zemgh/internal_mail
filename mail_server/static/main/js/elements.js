@@ -9,18 +9,15 @@ function ElementsManagerClass () {
         return node;
     }
 
-
     this.combine = function(parent, array) {
         array.forEach(el => parent.appendChild(el));
         return parent;
     }
 
-
     this.create_mails_block = function() {
         //      Блок писем
         return this.create_base_node('div', {className: 'mails_block'})
     }
-
 
     this.create_mails_list = function () {
         //      Список писем
@@ -30,7 +27,6 @@ function ElementsManagerClass () {
         base_block.appendChild(list_block);
         return base_block;
     }
-
 
     this.create_mails_line = function(is_checkbox=false) {
         //      Письмо в списке
@@ -53,7 +49,6 @@ function ElementsManagerClass () {
         return this.combine(line, [checkbox_container, inner_line]);
     }
 
-
     this.create_mail_view = function(type) {
         //      Просмотр письма
 
@@ -64,7 +59,6 @@ function ElementsManagerClass () {
 
         return this.combine(block, [options_block, info, message]);
     }
-
 
     this.create_mail_view_options_block = function(type) {
         //      Создание блока опций
@@ -94,7 +88,6 @@ function ElementsManagerClass () {
         return options_block;
     }
 
-
     this.create_new_mail_form = function(type) {
         //      Создание письма
 
@@ -108,7 +101,6 @@ function ElementsManagerClass () {
 
         return this.combine(main_block, [options_block, delayed, delayed_options, receiver, subject, message]);
     }
-
 
     this.create_input_with_label_new_mail = function(id, text) {
         let line = this.create_base_node('div',{className: 'create_line'});
@@ -134,7 +126,6 @@ function ElementsManagerClass () {
         return this.combine(options_line, [date, time]);
     }
 
-
     this.create_new_mail_options_block = function(type) {
         //      Опции для создания письма
 
@@ -155,13 +146,11 @@ function ElementsManagerClass () {
         }
     }
 
-
     this.create_options_button_for_mail = function(id, text) {
         //      Кнопка опций для письма/создания письма
 
         return this.create_base_node('div', {className: 'view_options_button', id: id, innerText: text});
     }
-
 
     this.create_mails_list_options_block = function(type) {
         //      Опции списка

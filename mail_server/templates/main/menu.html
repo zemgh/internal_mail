@@ -1,27 +1,27 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'main/css/menu.css' %}">
 
-<div class="menu">
+<div class="menu" id="menu">
 
     <button type="submit" class="new_mail_button">Написать</button>
 
     <div class="menu_line" id="received_mails">
-        <div class="menu_line_option">Входящие</div>
+        <div class="menu_line_option" id="menu_line">Входящие</div>
         <div class="menu_line_counter"></div>
     </div>
 
     <div class="menu_line" id="sent_mails">
-        <div class="menu_line_option">Отправленные</div>
+        <div class="menu_line_option" id="menu_line">Отправленные</div>
         <div class="menu_line_counter"></div>
     </div>
 
     <div class="menu_line" id="deleted_mails">
-        <div class="menu_line_option">Удалённые</div>
+        <div class="menu_line_option" id="menu_line">Удалённые</div>
         <div class="menu_line_counter"></div>
     </div>
 
     <div class="menu_line" id="drafts">
-        <div class="menu_line_option">Черновики</div>
+        <div class="menu_line_option" id="menu_line">Черновики</div>
         <div class="menu_line_counter"></div>
     </div>
 

@@ -1,5 +1,6 @@
 class ConnectionManager {
-    constructor(ws_url) {
+    constructor() {
+        let ws_url = `ws://${window.location.host}`
         this.websocket = new WebSocket(ws_url);
 
         this.websocket.onopen = () => {
@@ -53,12 +54,17 @@ class ConnectionManager {
         this.websocket.send(json_data);
     }
 
+    #connect(ws_url) {
+
+    }
 
     #printlog(text, data=null) {
-        if (data)
-            console.log(`[${this.#get_date()}] ${text}`, data);
-        else
-            console.log(`[${this.#get_date()}] ${text}`)
+        if (window.demo) {
+            if (data)
+                console.log(`[${this.#get_date()}] ${text}`, data);
+            else
+                console.log(`[${this.#get_date()}] ${text}`)
+        }
     }
 
     #get_date() {
