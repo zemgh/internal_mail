@@ -49,7 +49,8 @@ input.filter_input{
 div.filter_block{
     display: flex;
     justify-content: end;
-    width: 20%;
+    width: max-content;
+
 }
 
 div.filter_buttons_block{
@@ -79,6 +80,7 @@ div.filter_show, div.filter_hide{
     border-radius: 5px;
     padding: 5px 10px 5px 10px;
     user-select: none;
+    align-self: end;
 }
 
 div.filter_show{
