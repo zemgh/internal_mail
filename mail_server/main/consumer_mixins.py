@@ -2,7 +2,7 @@ import json
 from datetime import timedelta, datetime
 
 from main.models import Mail, DraftMail, DelayedMail
-from main.serializers import MailSerializer, DraftSerializer
+from main.serializers import ConsumerMailSerializer, ConsumerDraftSerializer
 from main.tasks import make_mail_from_delayed_mail
 from django.urls import reverse
 
@@ -61,8 +61,8 @@ class RequestsHandlerMixin:
 
 
 class SenderMixin:
-    mail_serializer = MailSerializer
-    draft_serializer = DraftSerializer
+    mail_serializer = ConsumerMailSerializer
+    draft_serializer = ConsumerDraftSerializer
 
     mails_per_page_default = None
     mails_type = None

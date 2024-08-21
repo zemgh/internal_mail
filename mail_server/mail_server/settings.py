@@ -18,7 +18,6 @@ CSRF_TRUSTED_ORIGINS = str(os.getenv('CSRF_TRUSTED_ORIGINS')).split(' ')
 INSTALLED_APPS = [
     "channels",
     "daphne",
-    "rest_framework",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -27,7 +26,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "users",
     "main",
-    "api"
+    "rest_framework",
+    "api",
+    "djoser",
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -61,14 +63,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'mail_server.wsgi.application'
 ASGI_APPLICATION = 'mail_server.asgi.application'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': str(os.getenv("SQL_ENGINE")),
+#         'NAME': str(os.getenv("SQL_DATABASE")),
+#         'USER': str(os.getenv("SQL_USER")),
+#         'PASSWORD': str(os.getenv("SQL_PASSWORD")),
+#         'HOST': str(os.getenv("SQL_HOST")),
+#         'PORT': str(os.getenv("SQL_PORT")),
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': str(os.getenv("SQL_ENGINE")),
-        'NAME': str(os.getenv("SQL_DATABASE")),
-        'USER': str(os.getenv("SQL_USER")),
-        'PASSWORD': str(os.getenv("SQL_PASSWORD")),
-        'HOST': str(os.getenv("SQL_HOST")),
-        'PORT': str(os.getenv("SQL_PORT")),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'internal_mail_db',
+        'USER': 'internal_mail',
+        'PASSWORD': 'qwerty',
+        'HOST': '127.0.0.1',
+        'PORT': 5432,
     }
 }
 
@@ -76,9 +89,24 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [str(os.getenv("CELERY_BACKEND"))]
+            # "hosts": [str(os.getenv("CELERY_BACKEND"))]
+            "hosts": ['redis://127.0.0.1:6379']
         },
     }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+            'rest_framework.authentication.TokenAuthentication'
+        ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 2,
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -118,5 +146,8 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'main'
 LOGOUT_REDIRECT_URL = 'login'
 
-CELERY_BROKER_URL = str(os.getenv("CELERY_BROKER"))
-CELERY_RESULT_BACKEND = str(os.getenv("CELERY_BACKEND"))
+# CELERY_BROKER_URL = str(os.getenv("CELERY_BROKER"))
+# CELERY_RESULT_BACKEND = str(os.getenv("CELERY_BACKEND"))
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379'

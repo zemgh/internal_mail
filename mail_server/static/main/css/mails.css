@@ -49,7 +49,7 @@ input.filter_input{
 div.filter_block{
     display: flex;
     justify-content: end;
-    width: max-content;
+    width: 100%
 
 }
 

@@ -15,18 +15,21 @@ class BaseMailsModel:
         created_dt += datetime.timedelta(hours=3)
 
         if current_dt.strftime('%d%m%Y') == created_dt.strftime('%d%m%Y'):
-            data = {
+            date = {
                 'short': created_dt.strftime('%H:%M'),
                 'long': created_dt.strftime('Сегодня в %H:%M')
             }
-            return data
+            return date
 
         current_year = datetime.datetime.now().year == created_dt.year
-        data = {
+        date = {
             'short': created_dt.strftime('%d %b') if current_year else created_dt.strftime('%d %b %Y'),
             'long': created_dt.strftime('%d %b %Y в %H:%M')
         }
-        return data
+        return date
+
+    def get_api_datetime(self):
+        return self.created.strftime('%d-%m-%Y %H:%M')
 
 
 class Mail(models.Model, BaseMailsModel):
@@ -41,6 +44,12 @@ class Mail(models.Model, BaseMailsModel):
     deleted = models.BooleanField(default=False)
     read = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
+
+    def make_read(self):
+        self.read = True
+        self.receiver.read_counter -= 1
+        self.receiver.save()
+        self.save()
 
 
 class DelayedMail(models.Model, BaseMailsModel):

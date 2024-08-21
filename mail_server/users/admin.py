@@ -9,7 +9,7 @@ User = get_user_model()
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     fields = ['username', 'first_name', 'last_name', 'channel', 'is_demo', 'is_active']
-    list_display = ['username', 'first_name', 'last_name', 'is_online']
+    list_display = ['id', 'username', 'first_name', 'last_name', 'is_online']
 
     def save_model(self, request, obj, form, change):
         if 'password' in form.changed_data:

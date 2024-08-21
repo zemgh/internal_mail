@@ -1,4 +1,9 @@
-class MailSerializer:
+from rest_framework import serializers
+
+from main.models import Mail
+
+
+class ConsumerMailSerializer:
     @classmethod
     def get_data_for_json(cls, queryset):
         mails_data = []
@@ -21,7 +26,7 @@ class MailSerializer:
         return m_data
 
 
-class DraftSerializer:
+class ConsumerDraftSerializer:
     @classmethod
     def get_data_for_json(cls, queryset):
         drafts_data = []
@@ -41,3 +46,21 @@ class DraftSerializer:
             'created': draft.get_datetime,
         }
         return d_data
+
+
+class MailListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mail
+        fields = ['id', 'subject', 'sender', 'read', 'get_api_datetime']
+
+
+class MailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mail
+        fields = ['id', 'subject', 'message', 'sender', 'get_api_datetime', 'read']
+
+
+class DelayedMailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mail
+        fields = ['id', 'subject', 'message', 'sender', 'send_datetime']
